@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StayBridge — Find Your Perfect Hotel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ivory: #FFFDF8;
+    --cream: #FFF6E9;
+    --gold: #C9943A;
+    --gold-light: #F5DFB0;
+    --gold-dark: #8F6520;
+    --teal: #1A6B7C;
+    --teal-light: #E0F3F7;
+    --teal-dark: #0E4A57;
+    --dark: #1C1C1E;
+    --mid: #4A4A4A;
+    --muted: #8A8A8A;
+    --border: #EDE8DF;
+    --white: #FFFFFF;
+    --shadow: rgba(28,28,30,0.08);
+    --shadow-md: rgba(28,28,30,0.13);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ivory);
+    color: var(--dark);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ---- SCROLL ANIMATION ---- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(36px);
+    transition: opacity 0.72s cubic-bezier(.22,1,.36,1), transform 0.72s cubic-bezier(.22,1,.36,1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity 0.72s cubic-bezier(.22,1,.36,1), transform 0.72s cubic-bezier(.22,1,.36,1); }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+  .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity 0.72s cubic-bezier(.22,1,.36,1), transform 0.72s cubic-bezier(.22,1,.36,1); }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+  .delay-1 { transition-delay: 0.1s !important; }
+  .delay-2 { transition-delay: 0.2s !important; }
+  .delay-3 { transition-delay: 0.3s !important; }
+  .delay-4 { transition-delay: 0.4s !important; }
+
+  /* ---- NAVBAR ---- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: rgba(255,253,248,0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 5%;
+    height: 72px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: box-shadow 0.3s;
+  }
+  nav.scrolled { box-shadow: 0 2px 24px var(--shadow); }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .nav-logo-icon {
+    width: 38px; height: 38px;
+    background: var(--gold);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px;
+  }
+  .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--dark); letter-spacing: -0.3px; }
+  .nav-logo-text span { color: var(--gold); }
+
+  .nav-links { display: flex; align-items: center; gap: 36px; }
+  .nav-links a { text-decoration: none; color: var(--mid); font-size: 14.5px; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold); }
+
+  .nav-cta {
+    background: var(--teal); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 10px 22px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, transform 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-cta:hover { background: var(--teal-dark); transform: translateY(-1px); }
+
+  .hamburger { display: none; background: none; border: none; cursor: pointer; font-size: 22px; color: var(--dark); }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 140px 5% 80px;
+    overflow: hidden;
+  }
+
+  /* Background image — full bleed */
+  .hero-bg-img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    z-index: 0;
+    display: block;
+  }
+
+  /* Dark overlay — sits over image, behind content */
+  .hero-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(
+      to bottom,
+      rgba(12, 30, 35, 0.55) 0%,
+      rgba(12, 30, 35, 0.48) 50%,
+      rgba(12, 30, 35, 0.72) 100%
+    );
+  }
+
+  /* All hero content sits above overlay */
+  .hero-inner {
+    position: relative; z-index: 2;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(201,148,58,0.18);
+    border: 1px solid rgba(201,148,58,0.5);
+    color: var(--gold-light);
+    padding: 7px 18px; border-radius: 100px;
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 24px;
+    backdrop-filter: blur(8px);
+    animation: fadeSlideDown 0.7s cubic-bezier(.22,1,.36,1) both;
+    letter-spacing: 0.02em;
+  }
+  .hero-badge i { font-size: 11px; }
+
+  .hero-h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 6vw, 78px);
+    line-height: 1.1;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.22);
+    animation: fadeSlideDown 0.7s 0.1s cubic-bezier(.22,1,.36,1) both;
+  }
+  .hero-h1 em { color: var(--gold-light); font-style: italic; }
+
+  .hero-sub {
+    font-size: clamp(15px, 1.8vw, 18px);
+    color: rgba(255,255,255,0.82);
+    max-width: 560px;
+    line-height: 1.72;
+    margin-bottom: 44px;
+    font-weight: 400;
+    animation: fadeSlideDown 0.7s 0.18s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  /* Search box */
+  /* ---- SEARCH BOX — PREMIUM REDESIGN ---- */
+  .search-box {
+    width: 100%;
+    max-width: 860px;
+    background: rgba(255,255,255,0.97);
+    border-radius: 24px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.32), 0 0 0 1px rgba(255,255,255,0.18);
+    padding: 28px 28px 22px;
+    animation: fadeSlideUp 0.75s 0.26s cubic-bezier(.22,1,.36,1) both;
+    backdrop-filter: blur(20px);
+  }
+  .search-box-title {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .search-box-title::before {
+    content: ''; display: inline-block; width: 18px; height: 2px;
+    background: var(--gold); border-radius: 2px;
+  }
+  .search-fields {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .search-fields-row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .search-field {
+    display: flex; flex-direction: column; gap: 6px;
+    background: var(--ivory);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 13px 16px;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.2s;
+    position: relative;
+    cursor: text;
+  }
+  .search-field:hover { border-color: var(--gold-light); background: #fffef9; }
+  .search-field:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3.5px rgba(201,148,58,0.13);
+    background: #fff;
+  }
+  .search-field label {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.09em;
+    display: flex; align-items: center; gap: 5px;
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+  .search-field:focus-within label { color: var(--gold-dark); }
+  .search-field label i { font-size: 9px; color: var(--gold); }
+  .search-field input, .search-field select {
+    background: none; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    color: var(--dark); width: 100%;
+    cursor: pointer;
+  }
+  .search-field input::placeholder { color: var(--muted); font-weight: 400; font-size: 14px; }
+  .search-field select { appearance: none; -webkit-appearance: none; }
+  .search-field select option { color: var(--dark); }
+  /* Custom caret for select */
+  .search-field.is-select::after {
+    content: '\f107';
+    font-family: 'Font Awesome 6 Free'; font-weight: 900;
+    position: absolute; right: 16px; bottom: 14px;
+    color: var(--gold); font-size: 12px; pointer-events: none;
+  }
+
+  .search-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold) 0%, #D4A044 100%);
+    color: #fff;
+    border: none; border-radius: 14px;
+    padding: 16px 24px; font-size: 15.5px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: all 0.22s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 6px 24px rgba(201,148,58,0.4);
+    letter-spacing: 0.02em;
+    position: relative; overflow: hidden;
+  }
+  .search-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .search-btn:hover {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, #b8842a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(201,148,58,0.48);
+  }
+  .search-btn:active { transform: translateY(0); box-shadow: 0 4px 16px rgba(201,148,58,0.3); }
+
+  /* Floating trust pills below search box */
+  .hero-trust-pills {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 20px;
+    flex-wrap: wrap; justify-content: center;
+    margin-top: 28px;
+    animation: fadeSlideUp 0.75s 0.4s cubic-bezier(.22,1,.36,1) both;
+  }
+  .trust-pill {
+    display: flex; align-items: center; gap: 8px;
+    color: rgba(255,255,255,0.88); font-size: 13.5px; font-weight: 500;
+  }
+  .trust-pill i { color: var(--gold-light); font-size: 14px; }
+  .trust-sep { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+
+  /* Scroll indicator */
+  .hero-scroll {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+    z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: rgba(255,255,255,0.55); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    animation: fadeSlideUp 1s 0.6s cubic-bezier(.22,1,.36,1) both;
+  }
+  .hero-scroll-line {
+    width: 1.5px; height: 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.55), transparent);
+    animation: scrollLine 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0%, 100% { transform: scaleY(1); opacity: 0.55; }
+    50% { transform: scaleY(0.4); opacity: 0.2; }
+  }
+
+  /* ---- STATS BAR ---- */
+  .stats-bar {
+    background: var(--teal);
+    padding: 28px 5%;
+  }
+  .stats-bar-inner {
+    max-width: 1280px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat-item { text-align: center; padding: 8px 0; position: relative; }
+  .stat-item:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); height: 40px; width: 1px; background: rgba(255,255,255,0.2); }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; color: #fff; line-height: 1; }
+  .stat-num span { color: var(--gold-light); }
+  .stat-lbl { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 5px; font-weight: 400; }
+
+  /* ---- SECTION STYLES ---- */
+  section { padding: 96px 5%; }
+  .section-inner { max-width: 1280px; margin: 0 auto; }
+  .section-tag { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .section-tag::before { content: ''; width: 28px; height: 2px; background: var(--gold); border-radius: 2px; }
+  .section-h2 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 3.5vw, 46px); font-weight: 700; color: var(--dark); line-height: 1.18; margin-bottom: 16px; }
+  .section-sub { font-size: 16px; color: var(--muted); max-width: 520px; line-height: 1.7; }
+  .section-header { margin-bottom: 52px; }
+  .section-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+  .view-all-btn {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--teal); font-size: 15px; font-weight: 600;
+    text-decoration: none; border: 1.5px solid var(--teal);
+    padding: 10px 22px; border-radius: 10px;
+    transition: background 0.2s, color 0.2s; white-space: nowrap;
+  }
+  .view-all-btn:hover { background: var(--teal); color: #fff; }
+
+  /* ---- DESTINATIONS ---- */
+  .destinations-section { background: var(--cream); }
+  .dest-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .dest-card {
+    border-radius: 18px; overflow: hidden; position: relative; cursor: pointer;
+    height: 260px;
+    box-shadow: 0 4px 20px var(--shadow);
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s;
+  }
+  .dest-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 16px 48px var(--shadow-md); }
+  .dest-card:first-child { grid-row: span 2; height: auto; min-height: 540px; }
+  .dest-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(.22,1,.36,1); }
+  .dest-card:hover img { transform: scale(1.06); }
+  .dest-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(28,28,30,0.72) 0%, transparent 55%);
+  }
+  .dest-info { position: absolute; bottom: 20px; left: 20px; right: 20px; color: #fff; }
+  .dest-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .dest-card:first-child .dest-name { font-size: 28px; }
+  .dest-count { font-size: 13px; opacity: 0.82; font-weight: 400; }
+  .dest-tag { display: inline-block; background: var(--gold); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; margin-bottom: 8px; }
+
+  /* ---- HOTELS ---- */
+  .hotels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .hotel-card {
+    background: var(--white); border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 16px var(--shadow);
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s;
+    cursor: pointer;
+  }
+  .hotel-card:hover { transform: translateY(-8px); box-shadow: 0 20px 56px var(--shadow-md); }
+  .hotel-img { position: relative; height: 220px; overflow: hidden; }
+  .hotel-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(.22,1,.36,1); }
+  .hotel-card:hover .hotel-img img { transform: scale(1.07); }
+  .hotel-badge { position: absolute; top: 14px; left: 14px; background: var(--white); color: var(--gold-dark); font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 100px; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 10px var(--shadow); }
+  .hotel-badge i { color: var(--gold); font-size: 11px; }
+  .hotel-wishlist { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 10px var(--shadow); color: var(--muted); font-size: 14px; transition: color 0.2s, transform 0.2s; }
+  .hotel-wishlist:hover { color: #E8445A; transform: scale(1.12); }
+  .hotel-body { padding: 20px; }
+  .hotel-location { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+  .hotel-location i { color: var(--gold); font-size: 11px; }
+  .hotel-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 10px; line-height: 1.25; }
+  .hotel-amenities { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .amenity-tag { background: var(--cream); color: var(--mid); font-size: 11.5px; font-weight: 500; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 5px; }
+  .amenity-tag i { color: var(--gold); font-size: 10px; }
+  .hotel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    gap: clamp(8px, 2vw, 16px);
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+  .hotel-price { min-width: 0; flex: 1 1 auto; }
+  .hotel-price-from { font-size: clamp(10px, 1.2vw, 12px); color: var(--muted); line-height: 1.2; }
+  .hotel-price-num {
+    font-size: clamp(16px, 2.2vw, 22px);
+    font-weight: 700; color: var(--dark);
+    font-family: 'Playfair Display', serif;
+    white-space: nowrap; line-height: 1.2;
+  }
+  .hotel-price-num span {
+    font-size: clamp(11px, 1.1vw, 13px);
+    color: var(--muted); font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .hotel-stars { display: flex; gap: 2px; }
+  .hotel-stars i { color: var(--gold); font-size: 13px; }
+
+  .book-btn {
+    background: var(--teal); color: #fff;
+    border: none;
+    border-radius: clamp(8px, 1.2vw, 10px);
+    padding: clamp(8px, 1vw, 11px) clamp(12px, 1.6vw, 20px);
+    font-size: clamp(12px, 1.1vw, 13.5px);
+    font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: clamp(4px, 0.6vw, 7px);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+  }
+  .book-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,74,87,0.28); }
+  .book-btn:active { transform: scale(0.97); box-shadow: none; }
+
+  /* Floating sticky book CTA — slides in from bottom on mobile when card is in view */
+  .floating-book-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 990;
+    background: rgba(255,253,248,0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    padding: 12px 5%;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    transform: translateY(110%);
+    transition: transform 0.38s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 -4px 28px rgba(28,28,30,0.1);
+  }
+  .floating-book-bar.visible { transform: translateY(0); }
+  .floating-book-bar-info { min-width: 0; }
+  .floating-book-bar-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: clamp(14px, 3.5vw, 17px);
+    color: var(--dark); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .floating-book-bar-price {
+    font-size: clamp(12px, 3vw, 14px);
+    color: var(--muted); margin-top: 2px;
+  }
+  .floating-book-bar-price strong { color: var(--gold); font-weight: 700; }
+  .floating-book-bar-btn {
+    background: var(--gold); color: #fff;
+    border: none; border-radius: 12px;
+    padding: clamp(11px, 2.5vw, 14px) clamp(20px, 5vw, 32px);
+    font-size: clamp(14px, 3.5vw, 16px);
+    font-weight: 700; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 4px 18px rgba(201,148,58,0.32);
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .floating-book-bar-btn:hover { background: var(--gold-dark); }
+  .floating-book-bar-btn:active { transform: scale(0.97); }
+
+  /* Only show floating bar below 900px */
+  @media (min-width: 901px) { .floating-book-bar { display: none !important; } }
+
+  /* Fine-tune hotel footer at tablet widths where cards are 2-col */
+  @media (max-width: 900px) and (min-width: 641px) {
+    .hotel-price-num { font-size: clamp(14px, 2.8vw, 18px); }
+    .book-btn { padding: 9px 14px; font-size: 12.5px; }
+  }
+
+  /* On single-col mobile: footer stays horizontal but button gets more room */
+  @media (max-width: 640px) {
+    .hotel-footer {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .hotel-price { flex: 1 1 auto; }
+    .hotel-price-num { font-size: clamp(18px, 4.5vw, 22px); }
+    .book-btn {
+      flex: 1 1 100%;
+      padding: 13px 20px;
+      font-size: 15px;
+      border-radius: 12px;
+      justify-content: center;
+    }
+  }
+
+  /* Smartwatch / very narrow — 320px */
+  @media (max-width: 360px) {
+    .hotel-price-num { font-size: 16px; }
+    .book-btn { font-size: 14px; padding: 11px 16px; }
+  }
+
+  /* ---- HOW IT WORKS ---- */
+  .how-section { background: var(--cream); }
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; position: relative; }
+  .steps-grid::before {
+    content: '';
+    position: absolute; top: 42px; left: 10%; right: 10%;
+    height: 2px; background: var(--border);
+    z-index: 0;
+  }
+  .step-card { text-align: center; position: relative; z-index: 1; }
+  .step-num {
+    width: 76px; height: 76px; border-radius: 50%;
+    background: var(--white); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    position: relative; z-index: 2;
+    box-shadow: 0 4px 20px var(--shadow);
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .step-card:hover .step-num { border-color: var(--gold); transform: scale(1.08); }
+  .step-num i { font-size: 26px; color: var(--teal); }
+  .step-num .badge { position: absolute; top: -4px; right: -4px; width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .step-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 10px; }
+  .step-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  /* ---- TESTIMONIALS ---- */
+  .testimonials-section { background: var(--ivory); }
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .testi-card {
+    background: var(--white); border-radius: 20px; padding: 28px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 16px var(--shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .testi-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px var(--shadow-md); }
+  .testi-quote-icon { font-size: 36px; color: var(--gold-light); margin-bottom: 16px; font-family: 'Playfair Display', serif; line-height: 1; }
+  .testi-text { font-size: 15px; color: var(--mid); line-height: 1.72; margin-bottom: 24px; font-style: italic; }
+  .testi-user { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--border); padding-top: 20px; }
+  .testi-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold-light); }
+  .testi-name { font-weight: 600; font-size: 15px; color: var(--dark); }
+  .testi-loc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .testi-loc i { color: var(--gold); font-size: 11px; }
+  .testi-stars { margin-left: auto; color: var(--gold); font-size: 13px; display: flex; gap: 2px; }
+
+  /* ---- CTA SECTION ---- */
+  .cta-section {
+    background: var(--teal);
+    padding: 96px 5%;
+    position: relative; overflow: hidden;
+  }
+  .cta-bg-circle { position: absolute; top: -80px; right: -80px; width: 380px; height: 380px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .cta-bg-circle2 { position: absolute; bottom: -60px; left: -60px; width: 260px; height: 260px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+  .cta-inner { max-width: 700px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+  .cta-tag { display: inline-flex; align-items: center; gap: 8px; color: var(--gold-light); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; }
+  .cta-h2 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 3.5vw, 46px); font-weight: 700; color: #fff; margin-bottom: 18px; line-height: 1.2; }
+  .cta-sub { font-size: 16px; color: rgba(255,255,255,0.75); margin-bottom: 40px; line-height: 1.7; }
+  .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .cta-btn-primary {
+    background: var(--gold); color: #fff;
+    border: none; border-radius: 12px; padding: 16px 36px;
+    font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; gap: 10px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(201,148,58,0.32);
+  }
+  .cta-btn-primary:hover { background: var(--gold-dark); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(201,148,58,0.4); }
+  .cta-btn-secondary {
+    background: transparent; color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 12px; padding: 16px 36px;
+    font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .cta-btn-secondary:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+
+  /* ---- FOOTER ---- */
+  footer {
+    background: var(--dark);
+    padding: 72px 5% 36px;
+    color: rgba(255,255,255,0.72);
+  }
+  .footer-inner { max-width: 1280px; margin: 0 auto; }
+  .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 52px; }
+  .footer-brand { }
+  .footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; text-decoration: none; }
+  .footer-logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+  .footer-logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #fff; }
+  .footer-logo-text span { color: var(--gold); }
+  .footer-desc { font-size: 14.5px; line-height: 1.72; color: rgba(255,255,255,0.55); max-width: 280px; margin-bottom: 24px; }
+  .footer-socials { display: flex; gap: 10px; }
+  .social-btn { width: 38px; height: 38px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 15px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; text-decoration: none; }
+  .social-btn:hover { background: var(--gold); color: #fff; border-color: var(--gold); }
+  .footer-col-title { font-size: 13px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; }
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .footer-links a { text-decoration: none; color: rgba(255,255,255,0.55); font-size: 14.5px; transition: color 0.2s; display: flex; align-items: center; gap: 7px; }
+  .footer-links a:hover { color: var(--gold); }
+  .footer-links a i { font-size: 11px; }
+  .footer-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 28px; }
+  .footer-bottom { display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; gap: 16px; flex-wrap: wrap; }
+  .footer-bottom span { color: rgba(255,255,255,0.4); }
+  .footer-bottom span strong { color: var(--gold); }
+  .footer-legal { display: flex; gap: 24px; }
+  .footer-legal a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+  .footer-legal a:hover { color: var(--gold); }
+
+  /* ---- BOOKING MODAL ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(28,28,30,0.52);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 28px;
+    width: 100%; max-width: 560px;
+    box-shadow: 0 40px 100px rgba(28,28,30,0.28), 0 0 0 1px rgba(0,0,0,0.04);
+    position: relative;
+    animation: modalIn 0.42s cubic-bezier(.22,1,.36,1) both;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold-light) transparent;
+  }
+  .modal::-webkit-scrollbar { width: 4px; }
+  .modal::-webkit-scrollbar-track { background: transparent; }
+  .modal::-webkit-scrollbar-thumb { background: var(--gold-light); border-radius: 4px; }
+  #modalFormContent { display: block; }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(36px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+  .modal-header {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+    padding: 28px 28px 26px;
+    color: #fff; position: sticky; top: 0; z-index: 10;
+  }
+  .modal-header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  }
+  .modal-header h3 {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+    margin-bottom: 5px; letter-spacing: -0.2px;
+  }
+  .modal-header p { font-size: 13.5px; opacity: 0.7; }
+
+  .modal-close {
+    position: absolute; top: 18px; right: 18px;
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 50%; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.24); transform: rotate(90deg); }
+
+  .modal-body {
+    padding: 24px 28px 32px;
+  }
+
+  /* Hotel info strip */
+  .modal-hotel-info {
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(135deg, var(--cream), var(--ivory));
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px 16px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .modal-hotel-info::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, var(--gold), var(--gold-dark));
+    border-radius: 2px 0 0 2px;
+  }
+  .modal-hotel-thumb {
+    width: 52px; height: 52px; border-radius: 12px;
+    overflow: hidden; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .modal-hotel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-hotel-name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 15px; color: var(--dark); }
+  .modal-hotel-loc { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 3px; }
+
+  /* Form inputs */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; color: var(--mid);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin-bottom: 8px;
+  }
+  .form-group label i {
+    width: 18px; height: 18px;
+    background: var(--teal-light); color: var(--teal);
+    border-radius: 5px; display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 9px; flex-shrink: 0;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%; padding: 13px 16px;
+    border: 1.5px solid var(--border); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+    color: var(--dark); background: var(--ivory);
+    outline: none;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: var(--muted); font-weight: 400;
+  }
+  .form-group input:hover,
+  .form-group select:hover,
+  .form-group textarea:hover {
+    border-color: #d6cfc5;
+    background: #fffef9;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--teal);
+    background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(26,107,124,0.12);
+  }
+
+  /* Custom select arrow */
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free'; font-weight: 900;
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--teal); font-size: 11px; pointer-events: none;
+  }
+  .select-wrap select { padding-right: 36px; cursor: pointer; }
+
+  .form-group textarea {
+    height: 88px; resize: none; line-height: 1.6;
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold) 0%, #D4A044 100%);
+    color: #fff; border: none; border-radius: 14px;
+    padding: 16px 24px; font-size: 16px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: all 0.22s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 6px 24px rgba(201,148,58,0.38);
+    letter-spacing: 0.02em; position: relative; overflow: hidden;
+    margin-top: 4px;
+  }
+  .submit-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .submit-btn:hover {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, #b8842a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(201,148,58,0.48);
+  }
+  .submit-btn:active { transform: translateY(0); }
+
+  .form-note {
+    font-size: 12px; color: var(--muted); text-align: center;
+    margin-top: 14px; display: flex; align-items: center;
+    justify-content: center; gap: 7px; line-height: 1.5;
+  }
+  .form-note i { color: var(--teal); font-size: 13px; }
+
+  /* ---- SUCCESS STATE ---- */
+  .success-state { display: none; padding: 40px 28px; text-align: center; }
+  .success-state.show { display: block; }
+  .success-icon { width: 80px; height: 80px; background: #E8F8F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 34px; color: #22C55E; }
+  .success-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--dark); margin-bottom: 12px; }
+  .success-sub { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+  .success-whatsapp { background: #22C55E; color: #fff; border: none; border-radius: 12px; padding: 14px 28px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 9px; transition: background 0.2s; }
+  .success-whatsapp:hover { background: #16A34A; }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+
+  /* ---- MOBILE NAV ---- */
+  .mobile-nav { display: none; position: fixed; inset: 0; z-index: 998; background: var(--ivory); padding: 100px 5% 40px; flex-direction: column; gap: 28px; }
+  .mobile-nav.open { display: flex; }
+  .mobile-nav a { font-size: 22px; font-family: 'Playfair Display', serif; font-weight: 700; color: var(--dark); text-decoration: none; }
+  .mobile-nav a:hover { color: var(--gold); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 1100px) {
+    .hero-visual { display: none; }
+  }
+  @media (max-width: 900px) {
+    .search-fields { grid-template-columns: 1fr 1fr; }
+    .search-fields-row2 { grid-template-columns: 1fr 1fr; }
+    .dest-grid { grid-template-columns: 1fr 1fr; }
+    .dest-card:first-child { grid-row: span 1; min-height: 260px; }
+    .hotels-grid { grid-template-columns: 1fr 1fr; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .steps-grid::before { display: none; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .stats-bar-inner { grid-template-columns: repeat(2,1fr); gap: 20px; }
+    .stat-item::after { display: none; }
+    .trust-sep { display: none; }
+  }
+  @media (max-width: 640px) {
+    .nav-links, .nav-cta { display: none; }
+    .hamburger { display: block; }
+    .hero { padding: 110px 5% 100px; }
+    .search-fields { grid-template-columns: 1fr; }
+    .search-fields-row2 { grid-template-columns: 1fr; }
+    .search-box { border-radius: 18px; padding: 20px 18px 18px; }
+    .hero-trust-pills { gap: 14px; }
+    .dest-grid { grid-template-columns: 1fr; }
+    .hotels-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+    .section-header-row { flex-direction: column; align-items: flex-start; }
+    .form-row { grid-template-columns: 1fr; }
+    .hero-scroll { display: none; }
+    /* Modal full-screen on mobile */
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal {
+      border-radius: 24px 24px 0 0;
+      max-height: 90vh;
+      max-width: 100%;
+    }
+    .modal-body { padding: 18px 18px 32px; }
+    .modal-header { padding: 22px 18px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="mainNav">
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+    <span class="nav-logo-text">Stay<span>Bridge</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="#">Hotels</a>
+    <a href="#">Destinations</a>
+    <a href="#">Deals</a>
+    <a href="#">About</a>
+  </div>
+  <button class="nav-cta" onclick="openModal()">
+    <i class="fa-solid fa-calendar-check"></i> Book Now
+  </button>
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileNav()">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <a href="#" onclick="toggleMobileNav()">Hotels</a>
+  <a href="#" onclick="toggleMobileNav()">Destinations</a>
+  <a href="#" onclick="toggleMobileNav()">Deals</a>
+  <a href="#" onclick="toggleMobileNav()">About</a>
+  <button class="nav-cta" onclick="openModal(); toggleMobileNav();" style="width:fit-content;">
+    <i class="fa-solid fa-calendar-check"></i> Book Now
+  </button>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+
+  <!-- Background Hotel Image -->
+  <img
+    class="hero-bg-img"
+    src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=85&auto=format&fit=crop"
+    alt="Luxury hotel lobby"
+    fetchpriority="high"
+  />
+
+  <!-- Dark Overlay -->
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <!-- Hero Content -->
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <i class="fa-solid fa-star"></i> Nigeria's #1 Hotel Booking Platform
+    </div>
+
+    <h1 class="hero-h1">Find & Book Your <em>Perfect</em> Hotel Stay</h1>
+
+    <p class="hero-sub">Browse premium hotels across Nigeria. We confirm availability, handle the booking, and get you the best deal — personally.</p>
+
+    <!-- Search Box -->
+    <div class="search-box">
+      <div class="search-box-title">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--gold);"></i> Search Hotels Near You
+      </div>
+      <div class="search-fields">
+        <div class="search-field">
+          <label><i class="fa-solid fa-location-dot"></i> Location</label>
+          <input type="text" placeholder="e.g. Lagos, Abuja, Port Harcourt..." />
+        </div>
+        <div class="search-field">
+          <label><i class="fa-solid fa-calendar"></i> Check-in</label>
+          <input type="date" />
+        </div>
+        <div class="search-field">
+          <label><i class="fa-solid fa-calendar-check"></i> Check-out</label>
+          <input type="date" />
+        </div>
+      </div>
+      <div class="search-fields-row2">
+        <div class="search-field is-select">
+          <label><i class="fa-solid fa-user"></i> Guests</label>
+          <select>
+            <option>1 Guest</option>
+            <option>2 Guests</option>
+            <option>3 Guests</option>
+            <option>4+ Guests</option>
+          </select>
+        </div>
+        <div class="search-field is-select">
+          <label><i class="fa-solid fa-naira-sign"></i> Budget</label>
+          <select>
+            <option>Any Budget</option>
+            <option>Under ₦20,000/night</option>
+            <option>₦20,000–₦50,000</option>
+            <option>₦50,000–₦100,000</option>
+            <option>Above ₦100,000</option>
+          </select>
+        </div>
+      </div>
+      <button class="search-btn" onclick="scrollToHotels()">
+        <i class="fa-solid fa-magnifying-glass"></i> Search Available Hotels
+      </button>
+    </div>
+  </div>
+
+  <!-- Trust Pills -->
+  <div class="hero-trust-pills">
+    <div class="trust-pill"><i class="fa-solid fa-shield-check"></i> Verified Hotels</div>
+    <div class="trust-sep"></div>
+    <div class="trust-pill"><i class="fa-solid fa-bolt"></i> Instant Confirmation</div>
+    <div class="trust-sep"></div>
+    <div class="trust-pill"><i class="fa-brands fa-whatsapp"></i> WhatsApp Support</div>
+    <div class="trust-sep"></div>
+    <div class="trust-pill"><i class="fa-solid fa-star"></i> 4.9 Rated Service</div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-bar-inner">
+    <div class="stat-item reveal delay-1">
+      <div class="stat-num">8<span>+</span></div>
+      <div class="stat-lbl">Partner Hotels</div>
+    </div>
+    <div class="stat-item reveal delay-2">
+      <div class="stat-num">150<span>+</span></div>
+      <div class="stat-lbl">Rooms Available</div>
+    </div>
+    <div class="stat-item reveal delay-3">
+      <div class="stat-num">500<span>+</span></div>
+      <div class="stat-lbl">Bookings Completed</div>
+    </div>
+    <div class="stat-item reveal delay-4">
+      <div class="stat-num">4.9<span>★</span></div>
+      <div class="stat-lbl">Average Rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- DESTINATIONS -->
+<section class="destinations-section">
+  <div class="section-inner">
+    <div class="section-header section-header-row">
+      <div class="reveal">
+        <div class="section-tag">Top Locations</div>
+        <h2 class="section-h2">Explore Popular<br/>Destinations</h2>
+        <p class="section-sub">From the bustling streets of Lagos to the serene city of Abuja — we have you covered.</p>
+      </div>
+      <a href="#" class="view-all-btn reveal delay-2"><i class="fa-solid fa-compass"></i> Explore All</a>
+    </div>
+    <div class="dest-grid">
+      <div class="dest-card reveal delay-1">
+        <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=85&auto=format&fit=crop" alt="Lagos" loading="lazy" />
+        <div class="dest-overlay"></div>
+        <div class="dest-info">
+          <div class="dest-tag">Most Popular</div>
+          <div class="dest-name">Lagos</div>
+          <div class="dest-count"><i class="fa-solid fa-building"></i> 3 Hotels Available</div>
+        </div>
+      </div>
+      <div class="dest-card reveal delay-2">
+        <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&q=85&auto=format&fit=crop" alt="Abuja" loading="lazy" />
+        <div class="dest-overlay"></div>
+        <div class="dest-info">
+          <div class="dest-name">Abuja</div>
+          <div class="dest-count"><i class="fa-solid fa-building"></i> 2 Hotels Available</div>
+        </div>
+      </div>
+      <div class="dest-card reveal delay-3">
+        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=85&auto=format&fit=crop" alt="Port Harcourt" loading="lazy" />
+        <div class="dest-overlay"></div>
+        <div class="dest-info">
+          <div class="dest-name">Port Harcourt</div>
+          <div class="dest-count"><i class="fa-solid fa-building"></i> 2 Hotels Available</div>
+        </div>
+      </div>
+      <div class="dest-card reveal delay-4">
+        <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=500&q=85&auto=format&fit=crop" alt="Benin City" loading="lazy" />
+        <div class="dest-overlay"></div>
+        <div class="dest-info">
+          <div class="dest-name">Benin City</div>
+          <div class="dest-count"><i class="fa-solid fa-building"></i> 1 Hotel Available</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOTELS -->
+<section id="hotels">
+  <div class="section-inner">
+    <div class="section-header section-header-row">
+      <div class="reveal">
+        <div class="section-tag">Our Partners</div>
+        <h2 class="section-h2">Featured Hotels</h2>
+        <p class="section-sub">Handpicked hotels we personally verify and vouch for — quality guaranteed.</p>
+      </div>
+      <a href="#" class="view-all-btn reveal delay-2"><i class="fa-solid fa-hotel"></i> View All Hotels</a>
+    </div>
+    <div class="hotels-grid">
+
+      <div class="hotel-card reveal delay-1" onclick="openModal('Grand Imperial Lagos','Lagos, Victoria Island')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1455587734955-081b22074882?w=600&q=85&auto=format&fit=crop" alt="Grand Imperial Lagos" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Lagos, Victoria Island</div>
+          <h3 class="hotel-name">Grand Imperial Lagos</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-swimming-pool"></i> Pool</span>
+            <span class="amenity-tag"><i class="fa-solid fa-utensils"></i> Restaurant</span>
+            <span class="amenity-tag"><i class="fa-solid fa-dumbbell"></i> Gym</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦85,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-card reveal delay-2" onclick="openModal('Abuja Royal Suites','Abuja, Maitama')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=600&q=85&auto=format&fit=crop" alt="Abuja Royal Suites" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.8</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Abuja, Maitama</div>
+          <h3 class="hotel-name">Abuja Royal Suites</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-car"></i> Parking</span>
+            <span class="amenity-tag"><i class="fa-solid fa-concierge-bell"></i> Concierge</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦65,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-card reveal delay-3" onclick="openModal('PH Harbour View Hotel','Port Harcourt, GRA')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=85&auto=format&fit=crop" alt="PH Harbour View" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.7</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Port Harcourt, GRA</div>
+          <h3 class="hotel-name">PH Harbour View Hotel</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-swimming-pool"></i> Pool</span>
+            <span class="amenity-tag"><i class="fa-solid fa-spa"></i> Spa</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦55,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-card reveal delay-1" onclick="openModal('The Benin Palace Hotel','Benin City, Ring Road')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=600&q=85&auto=format&fit=crop" alt="Benin Palace Hotel" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.6</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Benin City, Ring Road</div>
+          <h3 class="hotel-name">The Benin Palace Hotel</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-utensils"></i> Restaurant</span>
+            <span class="amenity-tag"><i class="fa-solid fa-car"></i> Parking</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦35,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-card reveal delay-2" onclick="openModal('Eko Pearl Towers','Lagos, Eko Atlantic')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&q=85&auto=format&fit=crop" alt="Eko Pearl Towers" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Lagos, Eko Atlantic</div>
+          <h3 class="hotel-name">Eko Pearl Towers</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-swimming-pool"></i> Pool</span>
+            <span class="amenity-tag"><i class="fa-solid fa-dumbbell"></i> Gym</span>
+            <span class="amenity-tag"><i class="fa-solid fa-spa"></i> Spa</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦120,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-card reveal delay-3" onclick="openModal('Ibadan Heritage Inn','Ibadan, Bodija')">
+        <div class="hotel-img">
+          <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=85&auto=format&fit=crop" alt="Ibadan Heritage Inn" loading="lazy" />
+          <div class="hotel-badge"><i class="fa-solid fa-star"></i> 4.5</div>
+          <div class="hotel-wishlist"><i class="fa-regular fa-heart"></i></div>
+        </div>
+        <div class="hotel-body">
+          <div class="hotel-location"><i class="fa-solid fa-location-dot"></i> Ibadan, Bodija</div>
+          <h3 class="hotel-name">Ibadan Heritage Inn</h3>
+          <div class="hotel-amenities">
+            <span class="amenity-tag"><i class="fa-solid fa-wifi"></i> Free WiFi</span>
+            <span class="amenity-tag"><i class="fa-solid fa-utensils"></i> Restaurant</span>
+            <span class="amenity-tag"><i class="fa-solid fa-concierge-bell"></i> Concierge</span>
+          </div>
+          <div class="hotel-footer">
+            <div class="hotel-price">
+              <div class="hotel-price-from">From</div>
+              <div class="hotel-price-num">₦28,000 <span>/night</span></div>
+            </div>
+            <button class="book-btn"><i class="fa-solid fa-calendar-check"></i> Book</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center;">
+      <div class="reveal">
+        <div class="section-tag" style="justify-content:center;">Simple Process</div>
+        <h2 class="section-h2" style="margin:0 auto 16px;">How StayBridge Works</h2>
+        <p class="section-sub" style="margin:0 auto;">We made booking a hotel as easy as sending a message — human, personal, and stress-free.</p>
+      </div>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card reveal delay-1">
+        <div class="step-num"><i class="fa-solid fa-magnifying-glass"></i><span class="badge">1</span></div>
+        <div class="step-title">Search Hotels</div>
+        <div class="step-desc">Enter your location and dates. Browse our curated list of verified hotels near you.</div>
+      </div>
+      <div class="step-card reveal delay-2">
+        <div class="step-num"><i class="fa-solid fa-file-lines"></i><span class="badge">2</span></div>
+        <div class="step-title">Submit Booking</div>
+        <div class="step-desc">Fill in your details on the booking form. Your request goes directly to us instantly.</div>
+      </div>
+      <div class="step-card reveal delay-3">
+        <div class="step-num"><i class="fa-solid fa-phone-volume"></i><span class="badge">3</span></div>
+        <div class="step-title">We Confirm</div>
+        <div class="step-desc">We verify room availability with the hotel, then call you to confirm and arrange payment.</div>
+      </div>
+      <div class="step-card reveal delay-4">
+        <div class="step-num"><i class="fa-solid fa-key"></i><span class="badge">4</span></div>
+        <div class="step-title">Enjoy Your Stay</div>
+        <div class="step-desc">Once payment is confirmed, the hotel is notified. All you do is arrive and enjoy.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center;">
+      <div class="reveal">
+        <div class="section-tag" style="justify-content:center;">Guest Reviews</div>
+        <h2 class="section-h2" style="margin:0 auto 16px;">What Our Guests Say</h2>
+        <p class="section-sub" style="margin:0 auto;">Real experiences from real travellers who booked through StayBridge.</p>
+      </div>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal delay-1">
+        <div class="testi-quote-icon">"</div>
+        <p class="testi-text">The process was so smooth! I submitted my form on a Sunday evening and by Monday morning I had a confirmed room. Highly recommend StayBridge.</p>
+        <div class="testi-user">
+          <img class="testi-avatar" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&q=80&auto=format&fit=crop" alt="" />
+          <div>
+            <div class="testi-name">Adaeze Okonkwo</div>
+            <div class="testi-loc"><i class="fa-solid fa-location-dot"></i> Lagos, Nigeria</div>
+          </div>
+          <div class="testi-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal delay-2">
+        <div class="testi-quote-icon">"</div>
+        <p class="testi-text">I was skeptical at first but the personal touch made all the difference. She called me to confirm everything and the hotel was exactly as described. 10/10.</p>
+        <div class="testi-user">
+          <img class="testi-avatar" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&q=80&auto=format&fit=crop" alt="" />
+          <div>
+            <div class="testi-name">Emeka Nwosu</div>
+            <div class="testi-loc"><i class="fa-solid fa-location-dot"></i> Abuja, Nigeria</div>
+          </div>
+          <div class="testi-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal delay-3">
+        <div class="testi-quote-icon">"</div>
+        <p class="testi-text">Booked for my company trip and it was stress-free from start to finish. The rooms were clean, affordable, and the booking process was handled beautifully.</p>
+        <div class="testi-user">
+          <img class="testi-avatar" src="https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=120&q=80&auto=format&fit=crop" alt="" />
+          <div>
+            <div class="testi-name">Funmi Adeleke</div>
+            <div class="testi-loc"><i class="fa-solid fa-location-dot"></i> Port Harcourt, Nigeria</div>
+          </div>
+          <div class="testi-stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-bg-circle"></div>
+  <div class="cta-bg-circle2"></div>
+  <div class="cta-inner">
+    <div class="cta-tag reveal"><i class="fa-solid fa-bolt"></i> Ready to Book?</div>
+    <h2 class="cta-h2 reveal delay-1">Your Next Great Stay is Just One Click Away</h2>
+    <p class="cta-sub reveal delay-2">Browse our hotels, fill in your details, and we handle the rest. No stress, no guesswork — just a seamless, personal booking experience.</p>
+    <div class="cta-actions reveal delay-3">
+      <button class="cta-btn-primary" onclick="openModal()">
+        <i class="fa-solid fa-calendar-check"></i> Book a Room Now
+      </button>
+      <button class="cta-btn-secondary" onclick="scrollToHotels()">
+        <i class="fa-solid fa-hotel"></i> Browse Hotels
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="footer-logo" href="#">
+          <div class="footer-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+          <span class="footer-logo-text">Stay<span>Bridge</span></span>
+        </a>
+        <p class="footer-desc">Nigeria's most personal hotel booking platform. We find, confirm, and book your perfect stay — so you don't have to worry about a thing.</p>
+        <div class="footer-socials">
+          <a href="#" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="social-btn"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" class="social-btn"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" class="social-btn"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Quick Links</div>
+        <ul class="footer-links">
+          <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Home</a></li>
+          <li><a href="#hotels"><i class="fa-solid fa-chevron-right"></i> Hotels</a></li>
+          <li><a href="#"><i class="fa-solid fa-chevron-right"></i> Destinations</a></li>
+          <li><a href="#"><i class="fa-solid fa-chevron-right"></i> How It Works</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Cities</div>
+        <ul class="footer-links">
+          <li><a href="#"><i class="fa-solid fa-location-dot"></i> Lagos</a></li>
+          <li><a href="#"><i class="fa-solid fa-location-dot"></i> Abuja</a></li>
+          <li><a href="#"><i class="fa-solid fa-location-dot"></i> Port Harcourt</a></li>
+          <li><a href="#"><i class="fa-solid fa-location-dot"></i> Benin City</a></li>
+          <li><a href="#"><i class="fa-solid fa-location-dot"></i> Ibadan</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <ul class="footer-links">
+          <li><a href="#"><i class="fa-brands fa-whatsapp"></i> WhatsApp Us</a></li>
+          <li><a href="#"><i class="fa-solid fa-envelope"></i> Send Email</a></li>
+          <li><a href="#"><i class="fa-solid fa-phone"></i> Call Us</a></li>
+        </ul>
+        <div style="margin-top:20px; background:rgba(255,255,255,0.06); border-radius:12px; padding:16px;">
+          <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.06em;">Avg Response Time</div>
+          <div style="font-size:20px; font-weight:700; color:#fff;">Under 2 Hours</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:4px;">Mon–Sat, 8am–8pm</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-bottom">
+      <span>© 2025 <strong>StayBridge</strong>. All rights reserved.</span>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Book Your Room</h3>
+      <p>Fill in your details and we'll be in touch shortly.</p>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="modalFormContent">
+      <div class="modal-body">
+        <div class="modal-hotel-info">
+          <div class="modal-hotel-thumb">
+            <img id="modalHotelImg" src="https://images.unsplash.com/photo-1455587734955-081b22074882?w=200&q=80&auto=format&fit=crop" alt="" />
+          </div>
+          <div>
+            <div class="modal-hotel-name" id="modalHotelName">Grand Imperial Lagos</div>
+            <div class="modal-hotel-loc"><i class="fa-solid fa-location-dot" style="color:var(--gold);font-size:11px;"></i> <span id="modalHotelLoc">Lagos, Victoria Island</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fa-solid fa-user"></i> Full Name</label>
+            <input type="text" id="bookName" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+            <input type="tel" id="bookPhone" placeholder="+234 000 0000" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="bookEmail" placeholder="your@email.com" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fa-solid fa-calendar-days"></i> Check-in Date</label>
+            <input type="date" id="bookCheckin" />
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-calendar-check"></i> Check-out Date</label>
+            <input type="date" id="bookCheckout" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fa-solid fa-bed"></i> Room Type</label>
+            <div class="select-wrap">
+              <select id="bookRoom">
+                <option>Standard Room</option>
+                <option>Deluxe Room</option>
+                <option>Executive Suite</option>
+                <option>Presidential Suite</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-users"></i> Number of Guests</label>
+            <div class="select-wrap">
+              <select id="bookGuests">
+                <option>1 Guest</option>
+                <option>2 Guests</option>
+                <option>3 Guests</option>
+                <option>4+ Guests</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-comment-dots"></i> Special Requests <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">(Optional)</span></label>
+          <textarea id="bookNote" placeholder="Any special requests or notes..."></textarea>
+        </div>
+        <button class="submit-btn" onclick="submitBooking()">
+          <i class="fa-brands fa-whatsapp"></i> Send Booking Request
+        </button>
+        <div class="form-note"><i class="fa-solid fa-shield-check"></i> We confirm availability before charging — no payment on this form.</div>
+      </div>
+    </div>
+    <div class="success-state" id="successState">
+      <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="success-title">Booking Request Sent!</div>
+      <p class="success-sub">We've received your request. We'll verify availability with the hotel and call you back within 2 hours to confirm your booking and arrange payment.</p>
+      <button class="success-whatsapp" onclick="chatOnWhatsApp()">
+        <i class="fa-brands fa-whatsapp"></i> Chat Us on WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING STICKY BOOK BAR (mobile only) -->
+<div class="floating-book-bar" id="floatingBar" aria-live="polite">
+  <div class="floating-book-bar-info">
+    <div class="floating-book-bar-name" id="floatingBarName">Grand Imperial Lagos</div>
+    <div class="floating-book-bar-price">From <strong id="floatingBarPrice">₦85,000</strong>/night</div>
+  </div>
+  <button class="floating-book-bar-btn" id="floatingBarBtn">
+    <i class="fa-solid fa-calendar-check"></i> Book Now
+  </button>
+</div>
+
+<script>
+  // Navbar scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // ---- SCROLL REVEAL ----
+  const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  // ---- HOTEL CARDS: Floating sticky bar on mobile ----
+  const floatingBar  = document.getElementById('floatingBar');
+  const floatingName = document.getElementById('floatingBarName');
+  const floatingPrice= document.getElementById('floatingBarPrice');
+  const floatingBtn  = document.getElementById('floatingBarBtn');
+
+  const hotelCardMeta = [
+    { name: 'Grand Imperial Lagos',  loc: 'Lagos, Victoria Island', price: '₦85,000' },
+    { name: 'Abuja Royal Suites',    loc: 'Abuja, Maitama',         price: '₦65,000' },
+    { name: 'PH Harbour View Hotel', loc: 'Port Harcourt, GRA',     price: '₦55,000' },
+    { name: 'The Benin Palace Hotel',loc: 'Benin City, Ring Road',  price: '₦35,000' },
+    { name: 'Eko Pearl Towers',      loc: 'Lagos, Eko Atlantic',    price: '₦120,000'},
+    { name: 'Ibadan Heritage Inn',   loc: 'Ibadan, Bodija',         price: '₦28,000' },
+  ];
+
+  let activeCardMeta = hotelCardMeta[0];
+
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    const cards = document.querySelectorAll('.hotel-card');
+    const cardObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const idx = [...cards].indexOf(entry.target);
+        if (entry.isIntersecting && idx >= 0) {
+          const meta = hotelCardMeta[idx] || hotelCardMeta[0];
+          activeCardMeta = meta;
+          floatingName.textContent  = meta.name;
+          floatingPrice.textContent = meta.price;
+          floatingBtn.onclick = () => openModal(meta.name, meta.loc);
+          floatingBar.classList.add('visible');
+        }
+      });
+      const anyVisible = [...entries].some(e => e.isIntersecting);
+      if (!anyVisible && !document.querySelector('.hotel-card:is(:hover)')) {
+        const hotelsRect = document.getElementById('hotels')?.getBoundingClientRect();
+        if (!hotelsRect || hotelsRect.bottom < 0 || hotelsRect.top > window.innerHeight) {
+          floatingBar.classList.remove('visible');
+        }
+      }
+    }, { threshold: 0.35 });
+    cards.forEach(card => cardObs.observe(card));
+  }
+
+  // ---- WISHLIST TOGGLE ----
+  document.querySelectorAll('.hotel-wishlist').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const icon = this.querySelector('i');
+      icon.classList.toggle('fa-regular');
+      icon.classList.toggle('fa-solid');
+      this.style.color = icon.classList.contains('fa-solid') ? '#E8445A' : '';
+    });
+  });
+
+  // ---- MOBILE NAV ----
+  function toggleMobileNav() {
+    document.getElementById('mobileNav').classList.toggle('open');
+    const btn = document.getElementById('hamburgerBtn');
+    const icon = btn.querySelector('i');
+    icon.classList.toggle('fa-bars');
+    icon.classList.toggle('fa-xmark');
+  }
+
+  function scrollToHotels() {
+    document.getElementById('hotels').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ---- MODAL ----
+  const hotelImages = {
+    'Grand Imperial Lagos': 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=200&q=80&auto=format&fit=crop',
+    'Abuja Royal Suites': 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=200&q=80&auto=format&fit=crop',
+    'PH Harbour View Hotel': 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=200&q=80&auto=format&fit=crop',
+    'The Benin Palace Hotel': 'https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=200&q=80&auto=format&fit=crop',
+    'Eko Pearl Towers': 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=200&q=80&auto=format&fit=crop',
+    'Ibadan Heritage Inn': 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=200&q=80&auto=format&fit=crop',
+  };
+
+  function openModal(hotelName, hotelLoc) {
+    const name = hotelName || 'Grand Imperial Lagos';
+    const loc  = hotelLoc  || 'Lagos, Victoria Island';
+    document.getElementById('modalHotelName').textContent = name;
+    document.getElementById('modalHotelLoc').textContent  = loc;
+    document.getElementById('modalHotelImg').src = hotelImages[name] || hotelImages['Grand Imperial Lagos'];
+    document.getElementById('modalFormContent').style.display = 'block';
+    document.getElementById('successState').classList.remove('show');
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function submitBooking() {
+    const name    = document.getElementById('bookName').value.trim();
+    const phone   = document.getElementById('bookPhone').value.trim();
+    const email   = document.getElementById('bookEmail').value.trim();
+    const checkin = document.getElementById('bookCheckin').value;
+    const checkout= document.getElementById('bookCheckout').value;
+    if (!name || !phone || !checkin || !checkout) {
+      alert('Please fill in your name, phone, and travel dates.');
+      return;
+    }
+    document.getElementById('modalFormContent').style.display = 'none';
+    document.getElementById('successState').classList.add('show');
+  }
+
+  function chatOnWhatsApp() {
+    const hotel   = document.getElementById('modalHotelName').textContent;
+    const name    = document.getElementById('bookName').value || 'Guest';
+    const checkin = document.getElementById('bookCheckin').value;
+    const checkout= document.getElementById('bookCheckout').value;
+    const room    = document.getElementById('bookRoom').value;
+    const msg = encodeURIComponent(`Hello! I'd like to book a room at ${hotel}.\n\nName: ${name}\nCheck-in: ${checkin}\nCheck-out: ${checkout}\nRoom: ${room}\n\nPlease confirm availability. Thank you!`);
+    window.open(`https://wa.me/2348000000000?text=${msg}`, '_blank');
+  }
+</script>
+</body>
+</html>
