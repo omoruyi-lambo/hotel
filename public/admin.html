@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StayBridge — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0D0F14;
+  --surface: #151820;
+  --surface2: #1C2030;
+  --surface3: #242840;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --gold: #C9943A;
+  --gold-light: #F5DFB0;
+  --gold-dim: rgba(201,148,58,0.15);
+  --teal: #1A6B7C;
+  --teal-light: #22909F;
+  --green: #22C55E;
+  --green-dim: rgba(34,197,94,0.12);
+  --red: #EF4444;
+  --red-dim: rgba(239,68,68,0.12);
+  --amber: #F59E0B;
+  --amber-dim: rgba(245,158,11,0.12);
+  --blue: #3B82F6;
+  --blue-dim: rgba(59,130,246,0.12);
+  --text: #F0F0F5;
+  --text2: rgba(240,240,245,0.65);
+  --text3: rgba(240,240,245,0.35);
+  --sidebar-w: 260px;
+  --topbar-h: 64px;
+  --radius: 14px;
+  --radius-sm: 9px;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; line-height: 1.5; font-size: 14px; }
+
+/* ── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ══════════════════════════════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════════════════════════════ */
+#loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(26,107,124,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(201,148,58,0.08) 0%, transparent 45%);
+  padding: 24px;
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 24px;
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+}
+.login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+.login-logo-icon { width: 44px; height: 44px; background: var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; }
+.login-logo-text { font-family: 'Instrument Serif', serif; font-size: 24px; color: var(--text); }
+.login-logo-text span { color: var(--gold); }
+.login-h { font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 8px; color: var(--text); }
+.login-sub { color: var(--text2); font-size: 14px; margin-bottom: 36px; }
+.lform-group { margin-bottom: 20px; }
+.lform-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.lform-group input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border2); border-radius: var(--radius-sm); padding: 13px 16px; font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+.lform-group input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,148,58,0.12); }
+.lform-group input::placeholder { color: var(--text3); }
+.login-btn { width: 100%; background: var(--gold); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s, transform 0.15s; display: flex; align-items: center; justify-content: center; gap: 9px; }
+.login-btn:hover { background: #b8842a; transform: translateY(-1px); }
+.login-err { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--red); font-size: 13.5px; margin-bottom: 20px; display: none; }
+.login-err.show { display: block; }
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN APP LAYOUT
+══════════════════════════════════════════════════════════════ */
+#app { display: none; min-height: 100vh; }
+#app.active { display: flex; }
+
+/* ── SIDEBAR ──────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 200;
+  transition: transform 0.3s;
+}
+.sidebar-logo { padding: 22px 22px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.sidebar-logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+.sidebar-logo-text { font-family: 'Instrument Serif', serif; font-size: 20px; }
+.sidebar-logo-text span { color: var(--gold); }
+.sidebar-badge { background: var(--surface3); color: var(--text3); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+.nav-section-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 10px 6px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--radius-sm); color: var(--text2); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.18s; text-decoration: none; position: relative; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,148,58,0.2); }
+.nav-item i { width: 18px; text-align: center; font-size: 15px; }
+.nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; min-width: 20px; text-align: center; }
+.sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--border); }
+.sidebar-user { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); }
+.sidebar-avatar { width: 36px; height: 36px; background: var(--gold-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 15px; flex-shrink: 0; }
+.sidebar-user-name { font-weight: 600; font-size: 13.5px; }
+.sidebar-user-role { font-size: 11px; color: var(--text3); }
+.sidebar-logout { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text3); font-size: 13.5px; cursor: pointer; transition: color 0.2s; margin-top: 4px; }
+.sidebar-logout:hover { color: var(--red); }
+
+/* ── MAIN CONTENT ─────────────────────────────────────────── */
+.main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── TOPBAR ───────────────────────────────────────────────── */
+.topbar { height: var(--topbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 100; }
+.topbar-title { font-family: 'Instrument Serif', serif; font-size: 22px; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-time { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text3); }
+.topbar-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text2); cursor: pointer; transition: all 0.18s; font-size: 15px; }
+.topbar-btn:hover { background: var(--surface3); color: var(--text); }
+.topbar-notif { position: relative; }
+.notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--surface); }
+
+/* ── PAGE CONTENT ─────────────────────────────────────────── */
+.content { flex: 1; padding: 28px; overflow-y: auto; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── STAT CARDS ───────────────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: var(--radius) var(--radius) 0 0; }
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.red::before { background: var(--red); }
+.stat-card.blue::before { background: var(--blue); }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px; }
+.stat-card.gold .stat-icon { background: var(--gold-dim); color: var(--gold); }
+.stat-card.green .stat-icon { background: var(--green-dim); color: var(--green); }
+.stat-card.red .stat-icon { background: var(--red-dim); color: var(--red); }
+.stat-card.blue .stat-icon { background: var(--blue-dim); color: var(--blue); }
+.stat-num { font-family: 'Instrument Serif', serif; font-size: 36px; line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 13px; color: var(--text2); }
+
+/* ── TABLE ────────────────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.card-head { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.card-title { font-family: 'Instrument Serif', serif; font-size: 20px; }
+.card-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filter-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; cursor: pointer; }
+.search-input { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 12px 8px 36px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 200px; }
+.search-wrap { position: relative; }
+.search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; }
+.search-input::placeholder { color: var(--text3); }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; transition: all 0.18s; white-space: nowrap; }
+.btn-gold { background: var(--gold); color: #fff; }
+.btn-gold:hover { background: #b8842a; }
+.btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+.btn-green:hover { background: var(--green); color: #fff; }
+.btn-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.btn-red:hover { background: var(--red); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 12px 18px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface2); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
+.td-name { font-weight: 600; }
+.td-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── STATUS BADGES ────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 600; }
+.badge-pending { background: var(--amber-dim); color: var(--amber); }
+.badge-confirmed { background: var(--green-dim); color: var(--green); }
+.badge-rejected { background: var(--red-dim); color: var(--red); }
+.badge-completed { background: var(--blue-dim); color: var(--blue); }
+.badge-room { background: rgba(201,148,58,0.12); color: var(--gold); }
+.badge-event { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+/* ── EMPTY STATE ──────────────────────────────────────────── */
+.empty-state { padding: 60px 24px; text-align: center; }
+.empty-icon { font-size: 48px; color: var(--text3); margin-bottom: 16px; }
+.empty-title { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 8px; }
+.empty-sub { color: var(--text2); font-size: 14px; }
+
+/* ── MODAL ────────────────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 40px 100px rgba(0,0,0,0.5); animation: modalIn 0.35s cubic-bezier(.22,1,.36,1) both; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
+.modal-head { padding: 22px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 10; }
+.modal-head h3 { font-family: 'Instrument Serif', serif; font-size: 20px; }
+.modal-close { width: 34px; height: 34px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.18s; }
+.modal-close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,0.25); }
+.modal-body { padding: 24px 26px 30px; }
+
+/* ── FORM ─────────────────────────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; background: var(--surface2); border: 1.5px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,148,58,0.1); }
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--text3); }
+.form-group select option { background: var(--surface2); }
+.form-group textarea { height: 80px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-section { margin-bottom: 24px; }
+.form-section-title { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--gold-dim); }
+.form-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 4px; }
+
+/* ── BOOKING DETAIL ───────────────────────────────────────── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.detail-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; }
+.detail-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.detail-val { font-size: 14px; font-weight: 500; }
+
+/* ── SETTINGS PAGE ────────────────────────────────────────── */
+.settings-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
+.settings-section-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.settings-section-head i { color: var(--gold); font-size: 16px; width: 20px; }
+.settings-section-head span { font-family: 'Instrument Serif', serif; font-size: 18px; }
+.settings-body { padding: 22px; }
+.settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── TOAST ────────────────────────────────────────────────── */
+#toast { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
+.toast-item { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 14px 18px; display: flex; align-items: center; gap: 10px; font-size: 13.5px; min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: toastIn 0.3s ease both; }
+.toast-item.success { border-left: 3px solid var(--green); }
+.toast-item.error { border-left: 3px solid var(--red); }
+.toast-item.info { border-left: 3px solid var(--blue); }
+.toast-item i { font-size: 16px; }
+.toast-item.success i { color: var(--green); }
+.toast-item.error i { color: var(--red); }
+.toast-item.info i { color: var(--blue); }
+@keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform:none; } }
+
+/* ── PAGINATION ───────────────────────────────────────────── */
+.pagination { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.pagination-info { font-size: 13px; color: var(--text2); }
+.pagination-btns { display: flex; gap: 8px; }
+.page-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.18s; }
+.page-btn:hover, .page-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── HOTEL CARDS GRID ────────────────────────────────────── */
+.hotels-admin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 22px; }
+.hotel-admin-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+.hotel-admin-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+.hotel-admin-img { height: 150px; overflow: hidden; position: relative; }
+.hotel-admin-img img { width: 100%; height: 100%; object-fit: cover; }
+.hotel-admin-badge { position: absolute; top: 10px; right: 10px; }
+.hotel-admin-body { padding: 16px; }
+.hotel-admin-name { font-family: 'Instrument Serif', serif; font-size: 17px; margin-bottom: 4px; }
+.hotel-admin-loc { font-size: 12.5px; color: var(--text2); display: flex; align-items: center; gap: 5px; margin-bottom: 12px; }
+.hotel-admin-price { font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 12px; }
+.hotel-admin-actions { display: flex; gap: 8px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .hotels-admin-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-260px); width: 260px; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .settings-row { grid-template-columns: 1fr; }
+  .hotels-admin-grid { grid-template-columns: 1fr; }
+  table { font-size: 12px; }
+  td, th { padding: 10px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════════════════════════ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+      <div>
+        <div class="login-logo-text">Stay<span>Bridge</span></div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;">Admin Console</div>
+      </div>
+    </div>
+    <div class="login-h">Welcome back</div>
+    <div class="login-sub">Sign in to manage bookings, hotels, and site settings.</div>
+    <div class="login-err" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrMsg">Invalid username or password.</span></div>
+    <div class="lform-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username" />
+    </div>
+    <div class="lform-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+    </button>
+    <div style="margin-top:20px;font-size:12px;color:var(--text3);text-align:center;">
+      Connecting to: <span id="apiUrlDisplay" style="font-family:'DM Mono',monospace;color:var(--text2);"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+      <div>
+        <div class="sidebar-logo-text">Stay<span>Bridge</span></div>
+        <div class="sidebar-badge">Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <i class="fa-solid fa-gauge-high"></i> Dashboard
+      </div>
+
+      <div class="nav-section-label">Manage</div>
+      <div class="nav-item" onclick="showPage('bookings')">
+        <i class="fa-solid fa-calendar-check"></i> All Bookings
+        <span class="nav-badge" id="pendingBadge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('hotels')">
+        <i class="fa-solid fa-hotel"></i> Hotels
+      </div>
+
+      <div class="nav-section-label">Site</div>
+      <div class="nav-item" onclick="showPage('settings')">
+        <i class="fa-solid fa-sliders"></i> Site Settings
+      </div>
+      <div class="nav-item" onclick="showPage('password')">
+        <i class="fa-solid fa-lock"></i> Change Password
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar"><i class="fa-solid fa-user"></i></div>
+        <div>
+          <div class="sidebar-user-name" id="adminNameDisplay">Admin</div>
+          <div class="sidebar-user-role" id="adminRoleDisplay">Manager</div>
+        </div>
+      </div>
+      <div class="sidebar-logout" onclick="doLogout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="topbar-btn" onclick="toggleSidebar()" style="display:none;" id="menuToggle">
+          <i class="fa-solid fa-bars"></i>
+        </div>
+        <div class="topbar-title" id="pageTitle">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-time" id="clock"></div>
+        <a href="/" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> View Site
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ══ DASHBOARD PAGE ══════════════════════════════════ -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat-card gold">
+            <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="stat-num" id="statTotal">—</div>
+            <div class="stat-label">Total Bookings</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-num" id="statPending">—</div>
+            <div class="stat-label">Pending Action</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="stat-num" id="statConfirmed">—</div>
+            <div class="stat-label">Confirmed</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon"><i class="fa-solid fa-hotel"></i></div>
+            <div class="stat-num" id="statHotels">—</div>
+            <div class="stat-label">Active Hotels</div>
+          </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Recent Bookings</div>
+            <button class="btn btn-outline btn-sm" onclick="showPage('bookings')">View All <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="recentBookingsTable">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+              <div class="empty-sub">Loading bookings...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ BOOKINGS PAGE ═══════════════════════════════════ -->
+      <div class="page" id="page-bookings">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">All Bookings</div>
+            <div class="card-actions">
+              <div class="search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input class="search-input" id="bookingSearch" placeholder="Search name, hotel..." oninput="filterBookings()" />
+              </div>
+              <select class="filter-select" id="filterStatus" onchange="loadBookings()">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="rejected">Rejected</option>
+                <option value="completed">Completed</option>
+              </select>
+              <select class="filter-select" id="filterType" onchange="loadBookings()">
+                <option value="">All Types</option>
+                <option value="room">Room</option>
+                <option value="event">Event</option>
+              </select>
+            </div>
+          </div>
+          <div id="bookingsTableWrap">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+              <div class="empty-sub">Loading bookings...</div>
+            </div>
+          </div>
+          <div class="pagination" id="bookingPagination" style="display:none;">
+            <div class="pagination-info" id="paginationInfo"></div>
+            <div class="pagination-btns" id="paginationBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ HOTELS PAGE ════════════════════════════════════ -->
+      <div class="page" id="page-hotels">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Hotels</div>
+            <button class="btn btn-gold" onclick="openHotelModal()">
+              <i class="fa-solid fa-plus"></i> Add Hotel
+            </button>
+          </div>
+          <div class="hotels-admin-grid" id="hotelsGrid">
+            <div class="empty-state" style="grid-column:1/-1;">
+              <div class="empty-icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+              <div class="empty-sub">Loading hotels...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SETTINGS PAGE ══════════════════════════════════ -->
+      <div class="page" id="page-settings">
+        <form onsubmit="saveSettings(event)">
+          <div class="settings-section">
+            <div class="settings-section-head">
+              <i class="fa-solid fa-brands fa-whatsapp" style="color:#22C55E;"></i>
+              <span>Contact & WhatsApp</span>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div class="form-group">
+                  <label>WhatsApp Number <span style="color:var(--text3);font-weight:400;text-transform:none;font-size:11px;">(digits only, e.g. 2348012345678)</span></label>
+                  <input type="text" id="s_whatsapp_number" placeholder="2348000000000" />
+                </div>
+                <div class="form-group">
+                  <label>Phone Number (display)</label>
+                  <input type="text" id="s_phone_number" placeholder="+234 800 0000 000" />
+                </div>
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="s_email" placeholder="hello@staybridge.ng" />
+                </div>
+                <div class="form-group">
+                  <label>Response Time</label>
+                  <input type="text" id="s_response_time" placeholder="Under 2 Hours" />
+                </div>
+                <div class="form-group">
+                  <label>Working Hours</label>
+                  <input type="text" id="s_working_hours" placeholder="Mon–Sat, 8am–8pm" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-head">
+              <i class="fa-solid fa-star"></i>
+              <span>Hero Section</span>
+            </div>
+            <div class="settings-body">
+              <div class="form-group">
+                <label>Badge Text</label>
+                <input type="text" id="s_hero_badge" placeholder="Nigeria's #1 Hotel Booking Platform" />
+              </div>
+              <div class="form-group">
+                <label>Main Title</label>
+                <input type="text" id="s_hero_title" placeholder="Find & Book Your Perfect Hotel Stay" />
+              </div>
+              <div class="form-group">
+                <label>Subtitle</label>
+                <textarea id="s_hero_subtitle" placeholder="Browse premium hotels across Nigeria..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-head">
+              <i class="fa-solid fa-chart-bar"></i>
+              <span>Stats Bar</span>
+            </div>
+            <div class="settings-body">
+              <div class="settings-row">
+                <div class="form-group"><label>Total Hotels</label><input type="text" id="s_total_hotels" placeholder="6+" /></div>
+                <div class="form-group"><label>Total Rooms</label><input type="text" id="s_total_rooms" placeholder="150+" /></div>
+                <div class="form-group"><label>Happy Guests</label><input type="text" id="s_total_guests" placeholder="1,200+" /></div>
+                <div class="form-group"><label>Average Rating</label><input type="text" id="s_avg_rating" placeholder="4.9" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" class="btn btn-gold">
+              <i class="fa-solid fa-floppy-disk"></i> Save All Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ══ CHANGE PASSWORD PAGE ════════════════════════════ -->
+      <div class="page" id="page-password">
+        <div class="card" style="max-width:480px;">
+          <div class="card-head"><div class="card-title">Change Password</div></div>
+          <div style="padding:24px;">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="currPass" placeholder="••••••••" />
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="newPass" placeholder="Min. 8 characters" />
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="confPass" placeholder="Re-enter new password" />
+            </div>
+            <button class="btn btn-gold" onclick="changePassword()">
+              <i class="fa-solid fa-lock"></i> Update Password
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════════
+     BOOKING DETAIL MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="bookingModal" onclick="closeBookingModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3 id="bmTitle">Booking Details</h3>
+      <button class="modal-close" onclick="closeModal('bookingModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="bmBody"></div>
+  </div>
+</div>
+
+<!-- HOTEL MODAL -->
+<div class="modal-overlay" id="hotelModal" onclick="closeModal('hotelModal')">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:700px;">
+    <div class="modal-head">
+      <h3 id="hotelModalTitle">Add Hotel</h3>
+      <button class="modal-close" onclick="closeModal('hotelModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">Basic Info</div>
+        <div class="form-row">
+          <div class="form-group"><label>Hotel Name *</label><input type="text" id="hName" placeholder="Grand Imperial Lagos" /></div>
+          <div class="form-group"><label>City *</label><input type="text" id="hCity" placeholder="Lagos" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Full Location</label><input type="text" id="hLocation" placeholder="Lagos, Victoria Island" /></div>
+          <div class="form-group"><label>Price From (₦/night) *</label><input type="number" id="hPrice" placeholder="85000" /></div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="hDesc" placeholder="Describe the hotel..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Rating (0–5)</label><input type="number" id="hRating" placeholder="4.8" step="0.1" min="0" max="5" /></div>
+          <div class="form-group"><label>Status</label>
+            <select id="hActive">
+              <option value="true">Active (visible on site)</option>
+              <option value="false">Hidden</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Images</div>
+        <div class="form-group"><label>Main Image URL</label><input type="url" id="hImage" placeholder="https://images.unsplash.com/..." /></div>
+        <div class="form-group"><label>Thumbnail Image URL</label><input type="url" id="hThumb" placeholder="https://images.unsplash.com/...?w=200" /></div>
+        <div class="form-group"><label>Gallery Images (one URL per line)</label><textarea id="hGallery" placeholder="https://..." style="height:80px;"></textarea></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Amenities</div>
+        <div class="form-group"><label>Amenities (comma-separated)</label><input type="text" id="hAmenities" placeholder="Free WiFi, Pool, Restaurant, Gym" /></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Event Hall (Optional)</div>
+        <div class="form-row">
+          <div class="form-group"><label>Hall Name</label><input type="text" id="hHallName" placeholder="The Imperial Ballroom" /></div>
+          <div class="form-group"><label>Capacity</label><input type="number" id="hHallCap" placeholder="500" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Hall Price</label><input type="text" id="hHallPrice" placeholder="₦450,000" /></div>
+          <div class="form-group"><label>Hall Image URL</label><input type="url" id="hHallImg" placeholder="https://..." /></div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('hotelModal')">Cancel</button>
+        <button type="button" class="btn btn-gold" onclick="saveHotel()">
+          <i class="fa-solid fa-floppy-disk"></i> Save Hotel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:5000'
+  : window.location.origin; // same origin when deployed
+
+document.getElementById('apiUrlDisplay').textContent = API;
+
+let TOKEN = localStorage.getItem('sb_token');
+let currentPage = 1;
+let allBookings = [];
+let editingHotelId = null;
+
+// ════════════════════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════════
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!username || !password) return showLoginErr('Please enter username and password.');
+  try {
+    const res = await fetch(`${API}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) return showLoginErr(data.error || 'Login failed.');
+    TOKEN = data.token;
+    localStorage.setItem('sb_token', TOKEN);
+    document.getElementById('adminNameDisplay').textContent = data.admin.name || data.admin.username;
+    document.getElementById('adminRoleDisplay').textContent = data.admin.role === 'super' ? 'Super Admin' : 'Manager';
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    initApp();
+  } catch (e) {
+    showLoginErr('Could not connect to server. Check API URL.');
+  }
+}
+
+function showLoginErr(msg) {
+  document.getElementById('loginErrMsg').textContent = msg;
+  document.getElementById('loginErr').classList.add('show');
+}
+
+function doLogout() {
+  TOKEN = null;
+  localStorage.removeItem('sb_token');
+  location.reload();
+}
+
+function authHeader() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+async function initApp() {
+  await loadStats();
+  await loadRecentBookings();
+  // responsive
+  if (window.innerWidth <= 768) {
+    document.getElementById('menuToggle').style.display = 'flex';
+  }
+}
+
+// Auto-login if token exists
+window.addEventListener('DOMContentLoaded', () => {
+  if (TOKEN) {
+    // Validate token
+    fetch(`${API}/api/admin/bookings/stats`, { headers: authHeader() })
+      .then(r => {
+        if (r.ok) {
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('app').classList.add('active');
+          initApp();
+        } else {
+          localStorage.removeItem('sb_token');
+          TOKEN = null;
+        }
+      }).catch(() => {});
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+const pageTitles = {
+  dashboard: 'Dashboard',
+  bookings: 'All Bookings',
+  hotels: 'Hotels',
+  settings: 'Site Settings',
+  password: 'Change Password'
+};
+
+async function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().includes(pageTitles[name].toLowerCase().split(' ')[0])) {
+      n.classList.add('active');
+    }
+  });
+  document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+
+  if (name === 'dashboard') { await loadStats(); await loadRecentBookings(); }
+  if (name === 'bookings') await loadBookings();
+  if (name === 'hotels') await loadHotels();
+  if (name === 'settings') await loadSettings();
+
+  // close sidebar on mobile
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ════════════════════════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const [statsRes, hotelsRes] = await Promise.all([
+      fetch(`${API}/api/admin/bookings/stats`, { headers: authHeader() }),
+      fetch(`${API}/api/admin/hotels`, { headers: authHeader() })
+    ]);
+    const stats = await statsRes.json();
+    const hotels = await hotelsRes.json();
+
+    document.getElementById('statTotal').textContent = stats.total ?? 0;
+    document.getElementById('statPending').textContent = stats.pending ?? 0;
+    document.getElementById('statConfirmed').textContent = stats.confirmed ?? 0;
+    document.getElementById('statHotels').textContent = hotels.filter(h => h.active).length;
+
+    const badge = document.getElementById('pendingBadge');
+    if (stats.pending > 0) { badge.textContent = stats.pending; badge.style.display = 'inline-flex'; }
+    else badge.style.display = 'none';
+  } catch (e) { console.error(e); }
+}
+
+// ════════════════════════════════════════════════════════════
+// BOOKINGS
+// ════════════════════════════════════════════════════════════
+async function loadRecentBookings() {
+  const res = await fetch(`${API}/api/admin/bookings?limit=5`, { headers: authHeader() });
+  const data = await res.json();
+  document.getElementById('recentBookingsTable').innerHTML = renderBookingTable(data.bookings || [], true);
+}
+
+async function loadBookings() {
+  const status = document.getElementById('filterStatus')?.value || '';
+  const type = document.getElementById('filterType')?.value || '';
+  const url = `${API}/api/admin/bookings?page=${currentPage}&limit=15${status ? '&status=' + status : ''}${type ? '&type=' + type : ''}`;
+  const res = await fetch(url, { headers: authHeader() });
+  const data = await res.json();
+  allBookings = data.bookings || [];
+  document.getElementById('bookingsTableWrap').innerHTML = renderBookingTable(allBookings);
+  renderPagination(data.total, data.pages, data.page);
+}
+
+function filterBookings() {
+  const q = document.getElementById('bookingSearch').value.toLowerCase();
+  const filtered = allBookings.filter(b =>
+    (b.name||'').toLowerCase().includes(q) ||
+    (b.hotel||'').toLowerCase().includes(q) ||
+    (b.phone||'').toLowerCase().includes(q) ||
+    (b.email||'').toLowerCase().includes(q)
+  );
+  document.getElementById('bookingsTableWrap').innerHTML = renderBookingTable(filtered);
+}
+
+function renderBookingTable(bookings, compact = false) {
+  if (!bookings.length) return `
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+      <div class="empty-title">No bookings yet</div>
+      <div class="empty-sub">Bookings from the website will appear here.</div>
+    </div>`;
+
+  const rows = bookings.map(b => {
+    const dateStr = new Date(b.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    const typeLabel = b.type === 'room' ? `<span class="badge badge-room"><i class="fa-solid fa-bed"></i> Room</span>` : `<span class="badge badge-event"><i class="fa-solid fa-champagne-glasses"></i> Event</span>`;
+    const statusBadge = `<span class="badge badge-${b.status}">${b.status.charAt(0).toUpperCase() + b.status.slice(1)}</span>`;
+    const hotelOrHall = b.type === 'room' ? (b.hotel || '—') : (b.hallName || '—');
+    return `<tr>
+      <td><div class="td-name">${b.name}</div><div class="td-sub">${b.phone}</div></td>
+      <td>${hotelOrHall}</td>
+      <td>${typeLabel}</td>
+      <td>${statusBadge}</td>
+      <td style="color:var(--text2);">${dateStr}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:nowrap;">
+          <button class="btn btn-outline btn-sm btn-icon" title="View Details" onclick="viewBooking('${b._id}')"><i class="fa-solid fa-eye"></i></button>
+          ${b.status === 'pending' ? `
+            <button class="btn btn-green btn-sm" onclick="updateBookingStatus('${b._id}','confirmed')"><i class="fa-solid fa-check"></i></button>
+            <button class="btn btn-red btn-sm" onclick="updateBookingStatus('${b._id}','rejected')"><i class="fa-solid fa-xmark"></i></button>
+          ` : ''}
+          ${b.status === 'confirmed' ? `<button class="btn btn-outline btn-sm" onclick="updateBookingStatus('${b._id}','completed')" title="Mark Completed"><i class="fa-solid fa-flag-checkered"></i></button>` : ''}
+          <button class="btn btn-red btn-sm btn-icon" title="Delete" onclick="deleteBooking('${b._id}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<div style="overflow-x:auto;"><table>
+    <thead><tr>
+      <th>Guest</th><th>Hotel / Hall</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+async function viewBooking(id) {
+  const res = await fetch(`${API}/api/admin/bookings`, { headers: authHeader() });
+  const data = await res.json();
+  const b = data.bookings.find(b => b._id === id);
+  if (!b) return;
+
+  document.getElementById('bmTitle').textContent = b.type === 'room' ? '🛏 Room Booking' : '🎉 Event Booking';
+  const fields = b.type === 'room'
+    ? [['Hotel', b.hotel], ['Location', b.hotelLocation], ['Room Type', b.roomType], ['Check-in', b.checkin], ['Check-out', b.checkout], ['Guests', b.guests]]
+    : [['Hall', b.hallName], ['Event Type', b.eventType], ['Event Date', b.eventDate], ['Expected Guests', b.expectedGuests], ['Duration', b.duration]];
+
+  const allFields = [['Name', b.name], ['Phone', b.phone], ['Email', b.email || '—'], ...fields, ['Notes', b.notes || '—'], ['Status', `<span class="badge badge-${b.status}">${b.status}</span>`], ['Submitted', new Date(b.createdAt).toLocaleString('en-NG')]];
+
+  document.getElementById('bmBody').innerHTML = `
+    <div class="detail-grid">
+      ${allFields.map(([l, v]) => `<div class="detail-item"><div class="detail-label">${l}</div><div class="detail-val">${v}</div></div>`).join('')}
+    </div>
+    ${b.status === 'pending' ? `
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="updateBookingStatus('${b._id}','confirmed');closeModal('bookingModal')"><i class="fa-solid fa-check"></i> Confirm Booking</button>
+      <button class="btn btn-red" style="flex:1;" onclick="updateBookingStatus('${b._id}','rejected');closeModal('bookingModal')"><i class="fa-solid fa-xmark"></i> Reject</button>
+    </div>` : ''}
+    <div style="margin-top:14px;display:flex;gap:10px;">
+      <a href="https://wa.me/${(b.phone||'').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${b.name}, this is StayBridge regarding your booking request.`)}" target="_blank" class="btn btn-gold" style="flex:1;text-decoration:none;justify-content:center;">
+        <i class="fa-brands fa-whatsapp"></i> WhatsApp Guest
+      </a>
+    </div>
+  `;
+  document.getElementById('bookingModal').classList.add('open');
+}
+
+function closeBookingModal(e) {
+  if (e.target === document.getElementById('bookingModal')) closeModal('bookingModal');
+}
+
+async function updateBookingStatus(id, status) {
+  try {
+    const res = await fetch(`${API}/api/admin/bookings/${id}`, {
+      method: 'PATCH',
+      headers: authHeader(),
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error();
+    showToast(`Booking ${status}!`, 'success');
+    await loadBookings();
+    await loadStats();
+  } catch { showToast('Failed to update booking', 'error'); }
+}
+
+async function deleteBooking(id) {
+  if (!confirm('Delete this booking? This cannot be undone.')) return;
+  await fetch(`${API}/api/admin/bookings/${id}`, { method: 'DELETE', headers: authHeader() });
+  showToast('Booking deleted', 'info');
+  await loadBookings();
+  await loadStats();
+}
+
+function renderPagination(total, pages, page) {
+  const wrap = document.getElementById('bookingPagination');
+  if (pages <= 1) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  document.getElementById('paginationInfo').textContent = `Showing page ${page} of ${pages} (${total} total)`;
+  const btns = document.getElementById('paginationBtns');
+  btns.innerHTML = `
+    <button class="page-btn" onclick="goPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>
+    ${Array.from({ length: Math.min(pages, 7) }, (_, i) => i + 1).map(p => `<button class="page-btn ${p === page ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`).join('')}
+    <button class="page-btn" onclick="goPage(${page + 1})" ${page >= pages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>
+  `;
+}
+
+function goPage(p) { currentPage = p; loadBookings(); }
+
+// ════════════════════════════════════════════════════════════
+// HOTELS
+// ════════════════════════════════════════════════════════════
+async function loadHotels() {
+  const res = await fetch(`${API}/api/admin/hotels`, { headers: authHeader() });
+  const hotels = await res.json();
+  const grid = document.getElementById('hotelsGrid');
+  if (!hotels.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon"><i class="fa-solid fa-hotel"></i></div><div class="empty-title">No hotels yet</div><div class="empty-sub">Add your first hotel above.</div></div>`;
+    return;
+  }
+  grid.innerHTML = hotels.map(h => `
+    <div class="hotel-admin-card">
+      <div class="hotel-admin-img">
+        <img src="${h.thumbImage || h.image || 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=400'}" alt="${h.name}" loading="lazy" />
+        <div class="hotel-admin-badge">
+          <span class="badge ${h.active ? 'badge-confirmed' : 'badge-rejected'}">${h.active ? 'Active' : 'Hidden'}</span>
+        </div>
+      </div>
+      <div class="hotel-admin-body">
+        <div class="hotel-admin-name">${h.name}</div>
+        <div class="hotel-admin-loc"><i class="fa-solid fa-location-dot" style="color:var(--gold);"></i> ${h.location}</div>
+        <div class="hotel-admin-price">₦${h.priceFrom.toLocaleString()}<span style="font-size:12px;font-weight:400;color:var(--text2);">/night</span></div>
+        <div class="hotel-admin-actions">
+          <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openHotelModal('${h.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+          <button class="btn btn-red btn-sm btn-icon" onclick="deleteHotel('${h.id}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openHotelModal(hotelId = null) {
+  editingHotelId = hotelId;
+  document.getElementById('hotelModalTitle').textContent = hotelId ? 'Edit Hotel' : 'Add Hotel';
+  // clear form
+  ['hName','hCity','hLocation','hPrice','hDesc','hRating','hImage','hThumb','hGallery','hAmenities','hHallName','hHallCap','hHallPrice','hHallImg'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('hActive').value = 'true';
+  if (hotelId) {
+    // populate form with existing data
+    fetch(`${API}/api/admin/hotels`, { headers: authHeader() }).then(r => r.json()).then(hotels => {
+      const h = hotels.find(h => h.id === hotelId);
+      if (!h) return;
+      document.getElementById('hName').value = h.name || '';
+      document.getElementById('hCity').value = h.city || '';
+      document.getElementById('hLocation').value = h.location || '';
+      document.getElementById('hPrice').value = h.priceFrom || '';
+      document.getElementById('hDesc').value = h.description || '';
+      document.getElementById('hRating').value = h.rating || '';
+      document.getElementById('hImage').value = h.image || '';
+      document.getElementById('hThumb').value = h.thumbImage || '';
+      document.getElementById('hGallery').value = (h.gallery || []).join('\n');
+      document.getElementById('hAmenities').value = (h.amenities || []).join(', ');
+      document.getElementById('hActive').value = h.active ? 'true' : 'false';
+      if (h.eventHall) {
+        document.getElementById('hHallName').value = h.eventHall.name || '';
+        document.getElementById('hHallCap').value = h.eventHall.capacity || '';
+        document.getElementById('hHallPrice').value = h.eventHall.price || '';
+        document.getElementById('hHallImg').value = h.eventHall.image || '';
+      }
+    });
+  }
+  document.getElementById('hotelModal').classList.add('open');
+}
+
+async function saveHotel() {
+  const name = document.getElementById('hName').value.trim();
+  const priceFrom = parseInt(document.getElementById('hPrice').value);
+  if (!name || !priceFrom) return showToast('Hotel name and price are required', 'error');
+
+  const amenities = document.getElementById('hAmenities').value.split(',').map(s => s.trim()).filter(Boolean);
+  const gallery = document.getElementById('hGallery').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const hallName = document.getElementById('hHallName').value.trim();
+
+  const body = {
+    name,
+    city: document.getElementById('hCity').value.trim(),
+    location: document.getElementById('hLocation').value.trim(),
+    priceFrom,
+    description: document.getElementById('hDesc').value.trim(),
+    rating: parseFloat(document.getElementById('hRating').value) || 4.5,
+    image: document.getElementById('hImage').value.trim(),
+    thumbImage: document.getElementById('hThumb').value.trim(),
+    gallery,
+    amenities,
+    active: document.getElementById('hActive').value === 'true',
+    hasEventHall: !!hallName,
+    eventHall: hallName ? {
+      name: hallName,
+      capacity: parseInt(document.getElementById('hHallCap').value) || 0,
+      price: document.getElementById('hHallPrice').value.trim(),
+      image: document.getElementById('hHallImg').value.trim()
+    } : undefined
+  };
+
+  try {
+    const url = editingHotelId ? `${API}/api/admin/hotels/${editingHotelId}` : `${API}/api/admin/hotels`;
+    const method = editingHotelId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: authHeader(), body: JSON.stringify(body) });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast(`Hotel ${editingHotelId ? 'updated' : 'created'}!`, 'success');
+    closeModal('hotelModal');
+    await loadHotels();
+  } catch (e) { showToast(e.message || 'Failed to save hotel', 'error'); }
+}
+
+async function deleteHotel(id) {
+  if (!confirm('Delete this hotel? This cannot be undone.')) return;
+  await fetch(`${API}/api/admin/hotels/${id}`, { method: 'DELETE', headers: authHeader() });
+  showToast('Hotel deleted', 'info');
+  await loadHotels();
+}
+
+// ════════════════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════════════════
+async function loadSettings() {
+  const res = await fetch(`${API}/api/admin/settings`, { headers: authHeader() });
+  const settings = await res.json();
+  settings.forEach(s => {
+    const el = document.getElementById('s_' + s.key);
+    if (el) el.value = s.value || '';
+  });
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const keys = ['whatsapp_number','phone_number','email','response_time','working_hours',
+                 'hero_badge','hero_title','hero_subtitle',
+                 'total_hotels','total_rooms','total_guests','avg_rating'];
+  const body = {};
+  keys.forEach(k => {
+    const el = document.getElementById('s_' + k);
+    if (el) body[k] = el.value;
+  });
+  try {
+    const res = await fetch(`${API}/api/admin/settings`, {
+      method: 'PUT', headers: authHeader(), body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error();
+    showToast('Settings saved! ✅', 'success');
+  } catch { showToast('Failed to save settings', 'error'); }
+}
+
+// ════════════════════════════════════════════════════════════
+// CHANGE PASSWORD
+// ════════════════════════════════════════════════════════════
+async function changePassword() {
+  const curr = document.getElementById('currPass').value;
+  const next = document.getElementById('newPass').value;
+  const conf = document.getElementById('confPass').value;
+  if (!curr || !next) return showToast('Fill in all fields', 'error');
+  if (next !== conf) return showToast('Passwords do not match', 'error');
+  if (next.length < 6) return showToast('Password must be at least 6 characters', 'error');
+  try {
+    const res = await fetch(`${API}/api/admin/password`, {
+      method: 'PUT', headers: authHeader(),
+      body: JSON.stringify({ currentPassword: curr, newPassword: next })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showToast('Password updated!', 'success');
+    ['currPass','newPass','confPass'].forEach(id => document.getElementById(id).value = '');
+  } catch (e) { showToast(e.message || 'Failed to update password', 'error'); }
+}
+
+// ════════════════════════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+function showToast(msg, type = 'info') {
+  const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<i class="fa-solid ${icons[type]}"></i> ${msg}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+</script>
+</body>
+</html>
