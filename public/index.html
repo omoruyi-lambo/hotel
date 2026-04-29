@@ -304,6 +304,11 @@
   .hall-no-events i { font-size: 40px; color: var(--gold-light); margin-bottom: 16px; display: block; }
   .hall-no-events h3 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
   .hall-no-events p { color: var(--muted); font-size: 14.5px; }
+  .events-coming-soon { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; background: rgba(201,148,58,0.05); border: 2px dashed rgba(201,148,58,0.25); border-radius: 18px; text-align: center; }
+  .events-coming-soon i { font-size: 38px; color: var(--gold); margin-bottom: 14px; }
+  .events-coming-soon h4 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .events-coming-soon p { color: var(--muted); font-size: 14px; max-width: 300px; }
+  .events-coming-soon .cs-badge { display: inline-block; background: var(--gold); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 16px; letter-spacing: 0.08em; text-transform: uppercase; }
   .hall-detail-body { padding: 32px; }
   .hall-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
   .hall-detail-name { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 6px; }
@@ -612,7 +617,7 @@
         </div>
       </div>
     </div>
-    <div class="events-gallery">
+    <div class="events-gallery" id="eventsGallery">
       <div class="events-gallery-item reveal delay-1"><img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80&auto=format&fit=crop" alt="Main Hall" loading="lazy" /><div class="events-gallery-overlay"><span><i class="fa-solid fa-expand"></i> Main Hall</span></div></div>
       <div class="events-gallery-item reveal delay-2"><img src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=500&q=80&auto=format&fit=crop" alt="Wedding Setup" loading="lazy" /><div class="events-gallery-overlay"><span><i class="fa-solid fa-expand"></i> Wedding Setup</span></div></div>
       <div class="events-gallery-item reveal delay-3"><img src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&q=80&auto=format&fit=crop" alt="Conference" loading="lazy" /><div class="events-gallery-overlay"><span><i class="fa-solid fa-expand"></i> Conference Setup</span></div></div>
@@ -919,7 +924,8 @@ async function loadHotelsFromAPI() {
         </div>`;
       return;
     }
-    renderHotelCards(HOTELS);
+   renderHotelCards(HOTELS);
+    renderEventHallGallery(HOTELS);
   } catch (e) {
     console.warn('Hotels API unavailable:', e.message);
     HOTELS = [];
@@ -932,7 +938,35 @@ async function loadHotelsFromAPI() {
       </div>`;
   }
 }
+// ============================================================
+// RENDER EVENT HALL GALLERY — dynamic, driven by API data
+// ============================================================
+function renderEventHallGallery(hotels) {
+  const gallery = document.getElementById('eventsGallery');
+  if (!gallery) return;
 
+  const hallHotels = (hotels || []).filter(h => h.hasEventHall && h.eventHall && h.eventHall.image);
+
+  if (hallHotels.length === 0) {
+    gallery.innerHTML = `
+      <div class="events-coming-soon">
+        <span class="cs-badge">Coming Soon</span>
+        <i class="fa-solid fa-champagne-glasses"></i>
+        <h4>Event Halls Coming Soon</h4>
+        <p>Our partner hotels are preparing stunning event spaces. Check back soon or enquire directly.</p>
+      </div>`;
+    return;
+  }
+
+  const delays = ['delay-1','delay-2','delay-3','delay-4'];
+  gallery.innerHTML = hallHotels.map((h, i) => `
+    <div class="events-gallery-item reveal ${delays[i % 4]}">
+      <img src="${h.eventHall.image}" alt="${h.eventHall.name}" loading="lazy" />
+      <div class="events-gallery-overlay">
+        <span><i class="fa-solid fa-expand"></i> ${h.eventHall.name} — ${h.name}</span>
+      </div>
+    </div>`).join('');
+}
 // ============================================================
 // RENDER DESTINATIONS — built from real hotel data
 // ============================================================
