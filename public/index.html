@@ -554,26 +554,10 @@
       </div>
       <span class="view-all-btn reveal delay-2" onclick="scrollToSection('hotels')"><i class="fa-solid fa-compass"></i> Explore All</span>
     </div>
-    <div class="dest-grid">
-      <div class="dest-card reveal delay-1" onclick="filterByCity('Lagos')">
-        <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=85&auto=format&fit=crop" alt="Lagos" loading="lazy" />
-        <div class="dest-overlay"></div>
-        <div class="dest-info"><div class="dest-tag">Most Popular</div><div class="dest-name">Lagos</div><div class="dest-count"><i class="fa-solid fa-building"></i> 2 Hotels Available</div></div>
-      </div>
-      <div class="dest-card reveal delay-2" onclick="filterByCity('Abuja')">
-        <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&q=85&auto=format&fit=crop" alt="Abuja" loading="lazy" />
-        <div class="dest-overlay"></div>
-        <div class="dest-info"><div class="dest-name">Abuja</div><div class="dest-count"><i class="fa-solid fa-building"></i> 1 Hotel Available</div></div>
-      </div>
-      <div class="dest-card reveal delay-3" onclick="filterByCity('Port Harcourt')">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=85&auto=format&fit=crop" alt="Port Harcourt" loading="lazy" />
-        <div class="dest-overlay"></div>
-        <div class="dest-info"><div class="dest-name">Port Harcourt</div><div class="dest-count"><i class="fa-solid fa-building"></i> 1 Hotel Available</div></div>
-      </div>
-      <div class="dest-card reveal delay-4" onclick="filterByCity('Benin City')">
-        <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=500&q=85&auto=format&fit=crop" alt="Benin City" loading="lazy" />
-        <div class="dest-overlay"></div>
-        <div class="dest-info"><div class="dest-name">Benin City</div><div class="dest-count"><i class="fa-solid fa-building"></i> 1 Hotel Available</div></div>
+    <div class="dest-grid" id="destGrid">
+      <!-- Rendered dynamically after hotels load -->
+      <div style="grid-column:1/-1;padding:60px 20px;text-align:center;opacity:0.5;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:28px;color:var(--gold);"></i>
       </div>
     </div>
   </div>
@@ -918,19 +902,20 @@ async function loadHotelsFromAPI() {
   if (grid) grid.innerHTML = `
     <div style="grid-column:1/-1;padding:60px 20px;text-align:center;">
       <div style="font-size:36px;color:var(--gold);margin-bottom:16px;"><i class="fa-solid fa-spinner fa-spin"></i></div>
-      <div style="color:var(--text-light);font-size:15px;">Loading hotels...</div>
+      <div style="color:var(--muted);font-size:15px;">Loading hotels...</div>
     </div>`;
   try {
     const res = await fetch(`${SB_API}/api/hotels`);
     if (!res.ok) throw new Error('API unavailable');
     const hotels = await res.json();
     HOTELS = hotels;
+    renderDestinations(HOTELS);
     if (HOTELS.length === 0) {
       if (grid) grid.innerHTML = `
         <div style="grid-column:1/-1;padding:80px 20px;text-align:center;">
           <div style="font-size:48px;margin-bottom:16px;opacity:0.3;"><i class="fa-solid fa-hotel"></i></div>
           <div style="font-size:20px;font-weight:700;margin-bottom:10px;">Hotels Coming Soon</div>
-          <div style="color:var(--text-light);font-size:15px;">We are adding our partner hotels. Check back soon or contact us directly.</div>
+          <div style="color:var(--muted);font-size:15px;">We are adding our partner hotels. Check back soon or contact us directly.</div>
         </div>`;
       return;
     }
@@ -938,13 +923,73 @@ async function loadHotelsFromAPI() {
   } catch (e) {
     console.warn('Hotels API unavailable:', e.message);
     HOTELS = [];
+    renderDestinations([]);
     if (grid) grid.innerHTML = `
       <div style="grid-column:1/-1;padding:80px 20px;text-align:center;">
         <div style="font-size:48px;margin-bottom:16px;opacity:0.3;"><i class="fa-solid fa-hotel"></i></div>
         <div style="font-size:20px;font-weight:700;margin-bottom:10px;">Hotels Coming Soon</div>
-        <div style="color:var(--text-light);font-size:15px;">We are updating our hotel listings. Contact us directly to book.</div>
+        <div style="color:var(--muted);font-size:15px;">We are updating our hotel listings. Contact us directly to book.</div>
       </div>`;
   }
+}
+
+// ============================================================
+// RENDER DESTINATIONS — built from real hotel data
+// ============================================================
+function renderDestinations(hotels) {
+  const grid = document.getElementById('destGrid');
+  if (!grid) return;
+
+  if (!hotels || hotels.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;padding:60px 20px;text-align:center;opacity:0.55;">
+        <div style="font-size:40px;margin-bottom:14px;"><i class="fa-solid fa-map-location-dot" style="color:var(--gold);"></i></div>
+        <div style="font-size:18px;font-weight:700;color:var(--dark);margin-bottom:8px;">No destinations yet</div>
+        <div style="font-size:14px;color:var(--muted);">Destinations will appear here once hotels are added by the admin.</div>
+      </div>`;
+    return;
+  }
+
+  // Group hotels by city and pick one hotel image per city
+  const cityMap = {};
+  hotels.forEach(h => {
+    const city = h.city || 'Unknown';
+    if (!cityMap[city]) cityMap[city] = { city, count: 0, image: null };
+    cityMap[city].count++;
+    if (!cityMap[city].image && (h.image || h.thumbImage)) {
+      cityMap[city].image = h.image || h.thumbImage;
+    }
+  });
+
+  const cities = Object.values(cityMap);
+  if (cities.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:60px 20px;text-align:center;opacity:0.55;"><i class="fa-solid fa-map-location-dot" style="font-size:40px;color:var(--gold);"></i><div style="margin-top:12px;font-size:16px;color:var(--muted);">No destinations yet</div></div>`;
+    return;
+  }
+
+  // Sort by count desc — most hotels first (gets the big card)
+  cities.sort((a, b) => b.count - a.count);
+
+  grid.innerHTML = cities.map((c, i) => {
+    const isFirst = i === 0;
+    const delayClass = `reveal delay-${Math.min(i + 1, 4)}`;
+    const countLabel = `${c.count} Hotel${c.count > 1 ? 's' : ''} Available`;
+    const imgHtml = c.image
+      ? `<img src="${c.image}" alt="${c.city}" loading="lazy" />`
+      : `<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--teal),var(--teal-dark));display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-city" style="font-size:48px;color:rgba(255,255,255,0.3);"></i></div>`;
+    const tagHtml = isFirst ? `<div class="dest-tag">Most Popular</div>` : '';
+    return `
+      <div class="dest-card ${delayClass}" onclick="filterByCity('${c.city}')">
+        ${imgHtml}
+        <div class="dest-overlay"></div>
+        <div class="dest-info">
+          ${tagHtml}
+          <div class="dest-name">${c.city}</div>
+          <div class="dest-count"><i class="fa-solid fa-building"></i> ${countLabel}</div>
+        </div>
+      </div>`;
+  }).join('');
+  initReveal();
 }
 
 // old static array removed — hotels now live in the admin dashboard
@@ -1219,13 +1264,18 @@ function switchBookingTab(type) {
 // MODAL LOGIC
 // ============================================================
 function openModal(hotelName, hotelLoc) {
+  if (!HOTELS || HOTELS.length === 0) {
+    // No hotels yet — scroll to hotels section to show "coming soon"
+    scrollToSection('hotels');
+    return;
+  }
   const h = hotelName ? HOTELS.find(h => h.name === hotelName) : HOTELS[0];
   const name = hotelName || HOTELS[0].name;
   const loc  = hotelLoc  || HOTELS[0].location;
   document.getElementById('modalTitle').textContent = 'Book Your Room';
   document.getElementById('modalHotelName').textContent = name;
   document.getElementById('modalHotelLoc').textContent = loc;
-  document.getElementById('modalHotelImg').src = h ? h.thumbImage : HOTELS[0].thumbImage;
+  document.getElementById('modalHotelImg').src = (h && (h.thumbImage || h.image)) ? (h.thumbImage || h.image) : '';
   document.getElementById('roomTypeRow').style.display = 'block';
   document.getElementById('budgetRow').style.display = 'block';
   document.getElementById('modalFormContent').style.display = 'block';

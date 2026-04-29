@@ -267,6 +267,29 @@ td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
 .hotel-admin-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
 .hotel-admin-img { height: 150px; overflow: hidden; position: relative; }
 .hotel-admin-img img { width: 100%; height: 100%; object-fit: cover; }
+.hotel-admin-no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--text3); font-size: 12px; background: var(--surface3); }
+.hotel-admin-no-img i { font-size: 28px; }
+
+/* ── IMAGE PICKERS ────────────────────────────────────────── */
+.img-picker-wrap { border: 2px dashed var(--border2); border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; transition: border-color 0.2s; position: relative; }
+.img-picker-wrap:hover { border-color: var(--gold); }
+.img-picker-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 110px; color: var(--text3); font-size: 12.5px; }
+.img-picker-empty i { font-size: 28px; }
+.img-picker-preview-img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.gallery-slot { position: relative; }
+.gallery-slot .img-picker-wrap { }
+.gallery-preview-img { width: 100%; height: 80px; object-fit: cover; display: block; }
+.gallery-picker-empty { display: flex; align-items: center; justify-content: center; height: 80px; color: var(--text3); font-size: 20px; }
+.gallery-remove-btn { position: absolute; top: 4px; right: 4px; background: var(--red); color: #fff; border: none; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 10px; z-index: 5; }
+
+/* ── ROOM ENTRIES ─────────────────────────────────────────── */
+.room-entry { background: var(--surface3); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; }
+.room-entry-title { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.remove-room-btn { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.room-img-picker { border: 2px dashed var(--border2); border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; transition: border-color 0.2s; }
+.room-img-picker:hover { border-color: var(--gold); }
+.room-img-empty { display: flex; align-items: center; justify-content: center; gap: 7px; height: 70px; color: var(--text3); font-size: 12px; }
+.room-preview-img { width: 100%; height: 70px; object-fit: cover; display: block; }
 .hotel-admin-badge { position: absolute; top: 10px; right: 10px; }
 .hotel-admin-body { padding: 16px; }
 .hotel-admin-name { font-family: 'Instrument Serif', serif; font-size: 17px; margin-bottom: 4px; }
@@ -646,14 +669,42 @@ td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
 
       <div class="form-section">
         <div class="form-section-title">Images</div>
-        <div class="form-group"><label>Main Image URL</label><input type="url" id="hImage" placeholder="https://images.unsplash.com/..." /></div>
-        <div class="form-group"><label>Thumbnail Image URL</label><input type="url" id="hThumb" placeholder="https://images.unsplash.com/...?w=200" /></div>
-        <div class="form-group"><label>Gallery Images (one URL per line)</label><textarea id="hGallery" placeholder="https://..." style="height:80px;"></textarea></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Main Image</label>
+            <div class="img-picker-wrap" onclick="document.getElementById('hImageFile').click()">
+              <input type="file" id="hImageFile" accept="image/*" style="display:none" onchange="handleImgPick(this,'hImage','hImagePreview')" />
+              <div id="hImagePreview" class="img-picker-empty"><i class="fa-solid fa-image"></i><span>Click to select</span></div>
+            </div>
+            <input type="hidden" id="hImage" />
+          </div>
+          <div class="form-group">
+            <label>Thumbnail Image</label>
+            <div class="img-picker-wrap" onclick="document.getElementById('hThumbFile').click()">
+              <input type="file" id="hThumbFile" accept="image/*" style="display:none" onchange="handleImgPick(this,'hThumb','hThumbPreview')" />
+              <div id="hThumbPreview" class="img-picker-empty"><i class="fa-solid fa-image"></i><span>Click to select</span></div>
+            </div>
+            <input type="hidden" id="hThumb" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Gallery Images <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text3);">(click slots to add, up to 6)</span></label>
+          <div id="galleryPickerGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;"></div>
+        </div>
       </div>
 
       <div class="form-section">
         <div class="form-section-title">Amenities</div>
         <div class="form-group"><label>Amenities (comma-separated)</label><input type="text" id="hAmenities" placeholder="Free WiFi, Pool, Restaurant, Gym" /></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+          Rooms
+          <button type="button" class="btn btn-outline btn-sm" onclick="addRoomEntry()"><i class="fa-solid fa-plus"></i> Add Room</button>
+        </div>
+        <div id="roomsContainer"></div>
+        <div id="noRoomsHint" style="font-size:13px;color:var(--text3);padding:10px 0;text-align:center;border:2px dashed var(--border);border-radius:var(--radius-sm);">No rooms added yet. Click "Add Room" above to add the first room.</div>
       </div>
 
       <div class="form-section">
@@ -994,7 +1045,10 @@ async function loadHotels() {
   grid.innerHTML = hotels.map(h => `
     <div class="hotel-admin-card">
       <div class="hotel-admin-img">
-        <img src="${h.thumbImage || h.image || 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=400'}" alt="${h.name}" loading="lazy" />
+        ${(h.thumbImage || h.image)
+          ? `<img src="${h.thumbImage || h.image}" alt="${h.name}" loading="lazy" />`
+          : `<div class="hotel-admin-no-img"><i class="fa-solid fa-image"></i><span>No image</span></div>`
+        }
         <div class="hotel-admin-badge">
           <span class="badge ${h.active ? 'badge-confirmed' : 'badge-rejected'}">${h.active ? 'Active' : 'Hidden'}</span>
         </div>
@@ -1016,12 +1070,25 @@ function openHotelModal(hotelId = null) {
   editingHotelId = hotelId;
   document.getElementById('hotelModalTitle').textContent = hotelId ? 'Edit Hotel' : 'Add Hotel';
   // clear form
-  ['hName','hCity','hLocation','hPrice','hDesc','hRating','hImage','hThumb','hGallery','hAmenities','hHallName','hHallCap','hHallPrice','hHallImg'].forEach(id => {
+  ['hName','hCity','hLocation','hPrice','hDesc','hRating','hAmenities','hHallName','hHallCap','hHallPrice'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('hActive').value = 'true';
+
+  // clear image pickers
+  document.getElementById('hImage').value = '';
+  document.getElementById('hThumb').value = '';
+  document.getElementById('hImagePreview').className = 'img-picker-empty';
+  document.getElementById('hImagePreview').innerHTML = '<i class="fa-solid fa-image"></i><span>Click to select</span>';
+  document.getElementById('hThumbPreview').className = 'img-picker-empty';
+  document.getElementById('hThumbPreview').innerHTML = '<i class="fa-solid fa-image"></i><span>Click to select</span>';
+  document.getElementById('hHallImg').value = '';
+
+  // reset rooms and gallery
+  initRooms();
+  initGalleryPicker();
+
   if (hotelId) {
-    // populate form with existing data
     fetch(`${API}/api/admin/hotels`, { headers: authHeader() }).then(r => r.json()).then(hotels => {
       const h = hotels.find(h => h.id === hotelId);
       if (!h) return;
@@ -1031,11 +1098,30 @@ function openHotelModal(hotelId = null) {
       document.getElementById('hPrice').value = h.priceFrom || '';
       document.getElementById('hDesc').value = h.description || '';
       document.getElementById('hRating').value = h.rating || '';
-      document.getElementById('hImage').value = h.image || '';
-      document.getElementById('hThumb').value = h.thumbImage || '';
-      document.getElementById('hGallery').value = (h.gallery || []).join('\n');
       document.getElementById('hAmenities').value = (h.amenities || []).join(', ');
       document.getElementById('hActive').value = h.active ? 'true' : 'false';
+
+      // populate main image preview
+      if (h.image) {
+        document.getElementById('hImage').value = h.image;
+        document.getElementById('hImagePreview').className = '';
+        document.getElementById('hImagePreview').innerHTML = `<img class="img-picker-preview-img" src="${h.image}" />`;
+      }
+      // populate thumb preview
+      if (h.thumbImage) {
+        document.getElementById('hThumb').value = h.thumbImage;
+        document.getElementById('hThumbPreview').className = '';
+        document.getElementById('hThumbPreview').innerHTML = `<img class="img-picker-preview-img" src="${h.thumbImage}" />`;
+      }
+      // populate gallery
+      if (h.gallery && h.gallery.length > 0) {
+        h.gallery.forEach(img => populateGallerySlot(img));
+      }
+      // populate rooms
+      if (h.rooms && h.rooms.length > 0) {
+        h.rooms.forEach(r => addRoomEntry(r));
+      }
+      // populate event hall
       if (h.eventHall) {
         document.getElementById('hHallName').value = h.eventHall.name || '';
         document.getElementById('hHallCap').value = h.eventHall.capacity || '';
@@ -1053,8 +1139,11 @@ async function saveHotel() {
   if (!name || !priceFrom) return showToast('Hotel name and price are required', 'error');
 
   const amenities = document.getElementById('hAmenities').value.split(',').map(s => s.trim()).filter(Boolean);
-  const gallery = document.getElementById('hGallery').value.split('\n').map(s => s.trim()).filter(Boolean);
   const hallName = document.getElementById('hHallName').value.trim();
+
+  // sync all room fields before saving
+  rooms.forEach((_, idx) => syncRoom(idx));
+  const validRooms = rooms.filter(r => r.name && r.price > 0);
 
   const body = {
     name,
@@ -1065,9 +1154,10 @@ async function saveHotel() {
     rating: parseFloat(document.getElementById('hRating').value) || 4.5,
     image: document.getElementById('hImage').value.trim(),
     thumbImage: document.getElementById('hThumb').value.trim(),
-    gallery,
+    gallery: galleryImages.filter(Boolean),
     amenities,
     active: document.getElementById('hActive').value === 'true',
+    rooms: validRooms,
     hasEventHall: !!hallName,
     eventHall: hallName ? {
       name: hallName,
@@ -1149,8 +1239,214 @@ async function changePassword() {
 }
 
 // ════════════════════════════════════════════════════════════
-// MODAL HELPERS
+// IMAGE COMPRESSION HELPER
 // ════════════════════════════════════════════════════════════
+function compressImage(file, maxW, quality) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// MAIN / THUMBNAIL IMAGE PICKER
+// ════════════════════════════════════════════════════════════
+async function handleImgPick(input, hiddenId, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  showToast('Compressing image...', 'info');
+  const b64 = await compressImage(file, 900, 0.82);
+  document.getElementById(hiddenId).value = b64;
+  const prev = document.getElementById(previewId);
+  prev.className = '';
+  prev.innerHTML = `<img class="img-picker-preview-img" src="${b64}" />`;
+}
+
+// ════════════════════════════════════════════════════════════
+// GALLERY IMAGE PICKER
+// ════════════════════════════════════════════════════════════
+let galleryImages = [];
+
+function initGalleryPicker() {
+  galleryImages = [];
+  const grid = document.getElementById('galleryPickerGrid');
+  grid.innerHTML = '';
+  renderGalleryGrid();
+}
+
+function renderGalleryGrid() {
+  const grid = document.getElementById('galleryPickerGrid');
+  grid.innerHTML = '';
+  galleryImages.forEach((img, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'gallery-slot';
+    slot.style.position = 'relative';
+    slot.innerHTML = `
+      <div class="img-picker-wrap" style="height:80px;" onclick="document.getElementById('gFile${i}').click()">
+        <input type="file" id="gFile${i}" data-gidx="${i}" accept="image/*" style="display:none" onchange="handleGalleryPick(this)" />
+        <img src="${img}" style="width:100%;height:80px;object-fit:cover;display:block;" />
+      </div>
+      <button class="gallery-remove-btn" onclick="event.stopPropagation();removeGalleryImage(${i})">✕</button>`;
+    grid.appendChild(slot);
+  });
+  // Add empty slot if < 6
+  if (galleryImages.length < 6) {
+    const slot = document.createElement('div');
+    const ni = galleryImages.length;
+    slot.innerHTML = `
+      <div class="img-picker-wrap" style="height:80px;" onclick="document.getElementById('gFileNew${ni}').click()">
+        <input type="file" id="gFileNew${ni}" accept="image/*" style="display:none" onchange="handleGalleryAdd(this)" />
+        <div class="gallery-picker-empty"><i class="fa-solid fa-plus"></i></div>
+      </div>`;
+    grid.appendChild(slot);
+  }
+}
+
+async function handleGalleryPick(input) {
+  const idx = parseInt(input.dataset.gidx);
+  const file = input.files[0];
+  if (!file) return;
+  showToast('Compressing image...', 'info');
+  const b64 = await compressImage(file, 700, 0.78);
+  galleryImages[idx] = b64;
+  renderGalleryGrid();
+}
+
+async function handleGalleryAdd(input) {
+  const file = input.files[0];
+  if (!file) return;
+  showToast('Compressing image...', 'info');
+  const b64 = await compressImage(file, 700, 0.78);
+  galleryImages.push(b64);
+  renderGalleryGrid();
+}
+
+function removeGalleryImage(idx) {
+  galleryImages.splice(idx, 1);
+  renderGalleryGrid();
+}
+
+function populateGallerySlot(img) {
+  galleryImages.push(img);
+  renderGalleryGrid();
+}
+
+// ════════════════════════════════════════════════════════════
+// ROOM MANAGEMENT
+// ════════════════════════════════════════════════════════════
+let rooms = [];
+
+function initRooms() {
+  rooms = [];
+  document.getElementById('roomsContainer').innerHTML = '';
+  document.getElementById('noRoomsHint').style.display = 'block';
+}
+
+function addRoomEntry(room = null) {
+  const idx = rooms.length;
+  rooms.push(room ? { ...room } : { type: 'standard', name: '', price: 0, capacity: 1, image: '', features: [] });
+  document.getElementById('noRoomsHint').style.display = 'none';
+  const container = document.getElementById('roomsContainer');
+  const div = document.createElement('div');
+  div.className = 'room-entry';
+  div.id = `roomEntry${idx}`;
+  const imgHtml = rooms[idx].image
+    ? `<img class="room-preview-img" src="${rooms[idx].image}" />`
+    : `<div class="room-img-empty"><i class="fa-solid fa-image"></i><span>Click to select</span></div>`;
+  div.innerHTML = `
+    <div class="room-entry-title">
+      <span>Room #${idx + 1}</span>
+      <button type="button" class="remove-room-btn" onclick="removeRoomEntry(${idx})"><i class="fa-solid fa-trash"></i> Remove</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Room Name *</label>
+        <input type="text" id="rName${idx}" placeholder="Deluxe Double Room" value="${rooms[idx].name || ''}" oninput="syncRoom(${idx})" />
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="rType${idx}" onchange="syncRoom(${idx})">
+          <option value="standard" ${rooms[idx].type==='standard'?'selected':''}>Standard</option>
+          <option value="deluxe" ${rooms[idx].type==='deluxe'?'selected':''}>Deluxe</option>
+          <option value="suite" ${rooms[idx].type==='suite'?'selected':''}>Suite</option>
+          <option value="executive" ${rooms[idx].type==='executive'?'selected':''}>Executive</option>
+          <option value="presidential" ${rooms[idx].type==='presidential'?'selected':''}>Presidential</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Price (₦/night) *</label>
+        <input type="number" id="rPrice${idx}" placeholder="25000" value="${rooms[idx].price || ''}" oninput="syncRoom(${idx})" />
+      </div>
+      <div class="form-group">
+        <label>Capacity (guests)</label>
+        <input type="number" id="rCap${idx}" placeholder="2" min="1" value="${rooms[idx].capacity || 1}" oninput="syncRoom(${idx})" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Features (comma-separated)</label>
+      <input type="text" id="rFeatures${idx}" placeholder="AC, Smart TV, En-suite Bathroom, Balcony" value="${(rooms[idx].features || []).join(', ')}" oninput="syncRoom(${idx})" />
+    </div>
+    <div class="form-group">
+      <label>Room Image</label>
+      <div class="room-img-picker" onclick="document.getElementById('rImgFile${idx}').click()">
+        <input type="file" id="rImgFile${idx}" data-ridx="${idx}" accept="image/*" style="display:none" onchange="handleRoomImgPick(this)" />
+        <div id="rImgPreview${idx}">${imgHtml}</div>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+async function handleRoomImgPick(input) {
+  const idx = parseInt(input.dataset.ridx);
+  const file = input.files[0];
+  if (!file) return;
+  showToast('Compressing image...', 'info');
+  const b64 = await compressImage(file, 700, 0.8);
+  rooms[idx].image = b64;
+  const prev = document.getElementById(`rImgPreview${idx}`);
+  prev.innerHTML = `<img class="room-preview-img" src="${b64}" />`;
+}
+
+function syncRoom(idx) {
+  if (!rooms[idx]) return;
+  const nameEl = document.getElementById(`rName${idx}`);
+  const typeEl = document.getElementById(`rType${idx}`);
+  const priceEl = document.getElementById(`rPrice${idx}`);
+  const capEl = document.getElementById(`rCap${idx}`);
+  const featEl = document.getElementById(`rFeatures${idx}`);
+  if (nameEl) rooms[idx].name = nameEl.value;
+  if (typeEl) rooms[idx].type = typeEl.value;
+  if (priceEl) rooms[idx].price = parseFloat(priceEl.value) || 0;
+  if (capEl) rooms[idx].capacity = parseInt(capEl.value) || 1;
+  if (featEl) rooms[idx].features = featEl.value.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function removeRoomEntry(idx) {
+  // sync before splice
+  for (let i = 0; i < rooms.length; i++) syncRoom(i);
+  rooms.splice(idx, 1);
+  // re-render all rooms
+  document.getElementById('roomsContainer').innerHTML = '';
+  const snapshot = [...rooms];
+  rooms = [];
+  snapshot.forEach(r => addRoomEntry(r));
+  if (rooms.length === 0) document.getElementById('noRoomsHint').style.display = 'block';
+}
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
