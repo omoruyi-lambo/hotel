@@ -715,7 +715,14 @@ td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
         </div>
         <div class="form-row">
           <div class="form-group"><label>Hall Price</label><input type="text" id="hHallPrice" placeholder="₦450,000" /></div>
-          <div class="form-group"><label>Hall Image URL</label><input type="url" id="hHallImg" placeholder="https://..." /></div>
+          <div class="form-group">
+            <label>Hall Image <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text3);">(pick from device)</span></label>
+            <div class="img-picker-wrap" onclick="document.getElementById('hHallImgFile').click()">
+              <input type="file" id="hHallImgFile" accept="image/*" style="display:none" onchange="handleImgPick(this,'hHallImg','hHallImgPreview')" />
+              <div id="hHallImgPreview" class="img-picker-empty"><i class="fa-solid fa-image"></i><span>Click to select</span></div>
+            </div>
+            <input type="hidden" id="hHallImg" />
+          </div>
         </div>
       </div>
 
@@ -758,6 +765,20 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ════════════════════════════════════════════════════════════
+// SAFE JSON HELPER — prevents "Unexpected token '<'" when
+// the server returns an HTML error page instead of JSON
+// ════════════════════════════════════════════════════════════
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error('Server returned non-JSON:', text.slice(0, 200));
+    throw new Error('Server error — received HTML instead of JSON. Check the API is running.');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 // AUTH
 // ════════════════════════════════════════════════════════════
 async function doLogin() {
@@ -770,7 +791,7 @@ async function doLogin() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) return showLoginErr(data.error || 'Login failed.');
     TOKEN = data.token;
     localStorage.setItem('sb_token', TOKEN);
@@ -873,8 +894,8 @@ async function loadStats() {
       fetch(`${API}/api/admin/bookings/stats`, { headers: authHeader() }),
       fetch(`${API}/api/admin/hotels`, { headers: authHeader() })
     ]);
-    const stats = await statsRes.json();
-    const hotels = await hotelsRes.json();
+    const stats = await safeJson(statsRes);
+    const hotels = await safeJson(hotelsRes);
 
     document.getElementById('statTotal').textContent = stats.total ?? 0;
     document.getElementById('statPending').textContent = stats.pending ?? 0;
@@ -892,7 +913,7 @@ async function loadStats() {
 // ════════════════════════════════════════════════════════════
 async function loadRecentBookings() {
   const res = await fetch(`${API}/api/admin/bookings?limit=5`, { headers: authHeader() });
-  const data = await res.json();
+  const data = await safeJson(res);
   document.getElementById('recentBookingsTable').innerHTML = renderBookingTable(data.bookings || [], true);
 }
 
@@ -901,7 +922,7 @@ async function loadBookings() {
   const type = document.getElementById('filterType')?.value || '';
   const url = `${API}/api/admin/bookings?page=${currentPage}&limit=15${status ? '&status=' + status : ''}${type ? '&type=' + type : ''}`;
   const res = await fetch(url, { headers: authHeader() });
-  const data = await res.json();
+  const data = await safeJson(res);
   allBookings = data.bookings || [];
   document.getElementById('bookingsTableWrap').innerHTML = renderBookingTable(allBookings);
   renderPagination(data.total, data.pages, data.page);
@@ -961,7 +982,7 @@ function renderBookingTable(bookings, compact = false) {
 
 async function viewBooking(id) {
   const res = await fetch(`${API}/api/admin/bookings`, { headers: authHeader() });
-  const data = await res.json();
+  const data = await safeJson(res);
   const b = data.bookings.find(b => b._id === id);
   if (!b) return;
 
@@ -1001,7 +1022,7 @@ async function updateBookingStatus(id, status) {
       headers: authHeader(),
       body: JSON.stringify({ status })
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) { await safeJson(res); throw new Error(); }
     showToast(`Booking ${status}!`, 'success');
     await loadBookings();
     await loadStats();
@@ -1036,7 +1057,7 @@ function goPage(p) { currentPage = p; loadBookings(); }
 // ════════════════════════════════════════════════════════════
 async function loadHotels() {
   const res = await fetch(`${API}/api/admin/hotels`, { headers: authHeader() });
-  const hotels = await res.json();
+  const hotels = await safeJson(res);
   const grid = document.getElementById('hotelsGrid');
   if (!hotels.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon"><i class="fa-solid fa-hotel"></i></div><div class="empty-title">No hotels yet</div><div class="empty-sub">Add your first hotel above.</div></div>`;
@@ -1083,13 +1104,15 @@ function openHotelModal(hotelId = null) {
   document.getElementById('hThumbPreview').className = 'img-picker-empty';
   document.getElementById('hThumbPreview').innerHTML = '<i class="fa-solid fa-image"></i><span>Click to select</span>';
   document.getElementById('hHallImg').value = '';
+  document.getElementById('hHallImgPreview').className = 'img-picker-empty';
+  document.getElementById('hHallImgPreview').innerHTML = '<i class="fa-solid fa-image"></i><span>Click to select</span>';
 
   // reset rooms and gallery
   initRooms();
   initGalleryPicker();
 
   if (hotelId) {
-    fetch(`${API}/api/admin/hotels`, { headers: authHeader() }).then(r => r.json()).then(hotels => {
+    fetch(`${API}/api/admin/hotels`, { headers: authHeader() }).then(r => safeJson(r)).then(hotels => {
       const h = hotels.find(h => h.id === hotelId);
       if (!h) return;
       document.getElementById('hName').value = h.name || '';
@@ -1127,6 +1150,10 @@ function openHotelModal(hotelId = null) {
         document.getElementById('hHallCap').value = h.eventHall.capacity || '';
         document.getElementById('hHallPrice').value = h.eventHall.price || '';
         document.getElementById('hHallImg').value = h.eventHall.image || '';
+        if (h.eventHall.image) {
+          document.getElementById('hHallImgPreview').className = '';
+          document.getElementById('hHallImgPreview').innerHTML = `<img class="img-picker-preview-img" src="${h.eventHall.image}" />`;
+        }
       }
     });
   }
@@ -1171,7 +1198,7 @@ async function saveHotel() {
     const url = editingHotelId ? `${API}/api/admin/hotels/${editingHotelId}` : `${API}/api/admin/hotels`;
     const method = editingHotelId ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: authHeader(), body: JSON.stringify(body) });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    if (!res.ok) { const e = await safeJson(res); throw new Error(e.error); }
     showToast(`Hotel ${editingHotelId ? 'updated' : 'created'}!`, 'success');
     closeModal('hotelModal');
     await loadHotels();
@@ -1190,7 +1217,7 @@ async function deleteHotel(id) {
 // ════════════════════════════════════════════════════════════
 async function loadSettings() {
   const res = await fetch(`${API}/api/admin/settings`, { headers: authHeader() });
-  const settings = await res.json();
+  const settings = await safeJson(res);
   settings.forEach(s => {
     const el = document.getElementById('s_' + s.key);
     if (el) el.value = s.value || '';
@@ -1211,7 +1238,7 @@ async function saveSettings(e) {
     const res = await fetch(`${API}/api/admin/settings`, {
       method: 'PUT', headers: authHeader(), body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) { await safeJson(res); throw new Error(); }
     showToast('Settings saved! ✅', 'success');
   } catch { showToast('Failed to save settings', 'error'); }
 }
@@ -1231,7 +1258,7 @@ async function changePassword() {
       method: 'PUT', headers: authHeader(),
       body: JSON.stringify({ currentPassword: curr, newPassword: next })
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error);
     showToast('Password updated!', 'success');
     ['currPass','newPass','confPass'].forEach(id => document.getElementById(id).value = '');
